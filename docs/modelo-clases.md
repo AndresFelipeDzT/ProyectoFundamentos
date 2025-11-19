@@ -20,8 +20,20 @@ class SolicitudAmistad {
   - fechaRespuesta: LocalDate
 }
 
+class Grupo {
+  - id: long
+  - nombreGrupo: String
+}
+
+class ParticipantesGrupo {
+  - id: long
+}
+
 Usuario "1" -right- "*" SolicitudAmistad : "remitente"
 Usuario "1" -right- "*" SolicitudAmistad : "destinatario"
+Usuario "1" -down- "*" Grupo : "creador"
+Usuario "1" -down- "*" ParticipantesGrupo : "participantes"
+ParticipantesGrupo "*" -left- "1" Grupo : "grupo"
 
 @enduml
 ```

@@ -19,11 +19,15 @@ public class Usuario {
 
     String password;
 
+
     @OneToMany(mappedBy = "remitente")
     List<SolicitudAmistad> solicitudesEnviadas = new ArrayList<>();
 
     @OneToMany(mappedBy = "destinatario")
     List<SolicitudAmistad> solicitudesRecibidas = new ArrayList<>();
+
+     @OneToMany(mappedBy = "creador")
+    List<Grupo> gruposCreados = new ArrayList<>();
 
     public Usuario() {
 
