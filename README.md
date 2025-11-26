@@ -1,4 +1,4 @@
-# Ejemplo de Red Social
+# ConectaU
 
 > Proyecto base para la creación de una red social, incluye una serie de casos de uso para una red social implementados en en Spring Boot con pruebas de unidad
 
