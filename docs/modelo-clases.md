@@ -23,6 +23,7 @@ class SolicitudAmistad {
 class Grupo {
   - id: long
   - nombreGrupo: String
+  - descripcion: String
 }
 
 class ParticipantesGrupo {

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -30,7 +31,7 @@ public class Usuario {
     @OneToMany(mappedBy = "creador")
     List<Grupo> gruposCreados = new ArrayList<>();
 
-    @OneToOne(mappedBy = "usuario")
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
     PerfilAcademico perfil;
 
     @OneToMany(mappedBy = "autor")
