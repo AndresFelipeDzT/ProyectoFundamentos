@@ -27,7 +27,7 @@ public class TituloComponent extends VerticalLayout {
 
         HorizontalLayout titulo = new HorizontalLayout();
         titulo.setWidthFull();
-        titulo.add(new H1("Red Social"));
+        titulo.add(new H1("ConectaU"));
         barraTitulo.add(titulo);
         
         add(barraTitulo);

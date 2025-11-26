@@ -6,6 +6,7 @@ import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 
 @Entity
@@ -26,8 +27,18 @@ public class Usuario {
     @OneToMany(mappedBy = "destinatario")
     List<SolicitudAmistad> solicitudesRecibidas = new ArrayList<>();
 
-     @OneToMany(mappedBy = "creador")
+    @OneToMany(mappedBy = "creador")
     List<Grupo> gruposCreados = new ArrayList<>();
+
+    @OneToOne(mappedBy = "usuario")
+    PerfilAcademico perfil;
+
+    @OneToMany(mappedBy = "autor")
+    List<Publicacion> publicaciones = new ArrayList<>();
+
+    @OneToMany(mappedBy = "autor")
+    List<Comentario> comentarios = new ArrayList<>();
+
 
     public Usuario() {
 

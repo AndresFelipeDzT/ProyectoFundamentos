@@ -26,6 +26,9 @@ public class NavegacionComponent extends VerticalLayout {
     Button irAHome;
     Button irAAmigos;
     Button cerrarSesion;
+    Button irAGrupos;
+    Button irAPerfilAcademico;
+    Button irAPublicacion;
 
     // == Constructor
     // - Crea el componente
@@ -41,7 +44,7 @@ public class NavegacionComponent extends VerticalLayout {
 
         HorizontalLayout titulo = new HorizontalLayout();
         titulo.setWidthFull();
-        titulo.add(new H1("Red Social"));
+        titulo.add(new H1("ConectaU"));
         barraTitulo.add(titulo);
         
         HorizontalLayout botones = new HorizontalLayout();
@@ -59,6 +62,23 @@ public class NavegacionComponent extends VerticalLayout {
             e -> navegarA("amigos")   
         );
         botones.add(irAAmigos);
+
+        Button irAGrupos = new Button("Grupos");
+        irAGrupos.addClickListener(e -> navegarA("grupos"));
+        botones.add(irAGrupos);
+
+        Button irAPerfil = new Button("Perfil Académico");
+        irAPerfil.addClickListener(
+            e -> navegarA("perfil")
+        );
+        botones.add(irAPerfil);
+
+        Button irAPublicaciones = new Button("Publicaciones");
+        irAPublicaciones.addClickListener(
+            e -> navegarA("publicaciones")
+        );
+        botones.add(irAPublicaciones);
+
 
         cerrarSesion = new Button("Cerrar Sesión");
         cerrarSesion.addClickListener(

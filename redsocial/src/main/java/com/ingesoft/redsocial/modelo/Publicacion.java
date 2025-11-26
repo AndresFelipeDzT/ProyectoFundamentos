@@ -1,5 +1,6 @@
 package com.ingesoft.redsocial.modelo;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,19 +13,21 @@ import lombok.Data;
 
 @Entity
 @Data
-public class Grupo {
+public class Publicacion {
 
     @Id
     @GeneratedValue
-    private Long id;
+    Long id;
 
-    private String nombreGrupo;
-    private String descripcion;
+    String contenido;
+
+    LocalDateTime fechaCreacion;
 
     @ManyToOne
-    private Usuario creador;
+    Usuario autor;
 
-    @OneToMany(mappedBy = "grupo")
-    private List<ParticipantesGrupo> participantes = new ArrayList<>();
+    @OneToMany(mappedBy = "publicacion")
+    List<Comentario> comentarios = new ArrayList<>();
+
 }
 
