@@ -1,19 +1,16 @@
 package com.ingesoft.redsocial.repositorios;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.ingesoft.redsocial.modelo.Grupo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import com.ingesoft.redsocial.modelo.Grupo;
 
 @Repository
 public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 
-        // Busca un grupo por nombre exacto
-    Optional<Grupo> findByNombreGrupo(String nombreGrupo);
-    Optional<Grupo> findByNombreGrupoIgnoreCase(String nombreGrupo);
-    List<Grupo> findByNombreGrupoContainingIgnoreCase(String nombre);
+    boolean existsByNombreGrupoIgnoreCase(String nombreGrupo);
 
+    // Opcionales si los quieres usar en búsquedas
+    Grupo findByNombreGrupo(String nombreGrupo);
+
+    Grupo findByNombreGrupoIgnoreCase(String nombreGrupo);
 }

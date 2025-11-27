@@ -1,104 +1,112 @@
 package com.ingesoft.redsocial.ui;
 
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-
 import com.ingesoft.redsocial.modelo.Grupo;
 import com.ingesoft.redsocial.servicios.GrupoService;
-import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
-import com.ingesoft.redsocial.ui.servicio.SessionService;
-
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
-import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
+
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("grupos")
 public class GruposView extends VerticalLayout {
 
-    SessionService session;
-    NavegacionComponent nav;
-    GrupoService grupoService;
+    @Autowired
+    private GrupoService grupoService;
 
-    TextField nombreGrupo;
-    TextField descripcion;
-    Button crearGrupo;
+    private Grid<Grupo> tabla = new Grid<>(Grupo.class, false);
 
-    Grid<Grupo> tabla;
-
-    public GruposView(SessionService session, NavegacionComponent nav, GrupoService grupoService) {
-
-        this.session = session;
-        this.nav = nav;
+    public GruposView(GrupoService grupoService) {
         this.grupoService = grupoService;
 
-        // ❌ ESTA LÍNEA ERA EL ERROR:
-        // UI.getCurrent().access(this::validarSesion);
+        setPadding(true);
+        setSpacing(true);
 
-        // ✔️ ESTA ES LA CORRECTA:
-        validarSesion();
+        H3 titulo = new H3("Grupos disponibles");
 
-        setSizeFull();
-        getStyle().set("background-color", "#E6F7FF");
-        setAlignItems(Alignment.CENTER);
+        // ---------- Tabla ----------
+        tabla.addColumn(Grupo::getId).setHeader("ID");
+        tabla.addColumn(Grupo::getNombreGrupo).setHeader("Nombre");
+        tabla.addColumn(Grupo::getDescripcion).setHeader("Descripción");
+        tabla.addComponentColumn(this::crearBotonVer)
+                .setHeader("Ver detalles");
 
-        add(nav);
+        tabla.setItems(grupoService.obtenerTodos());
 
-        nombreGrupo = new TextField("Nombre del grupo");
-        nombreGrupo.setWidth("300px");
-
-        descripcion = new TextField("Descripción");
-        descripcion.setWidth("300px");
-
-        crearGrupo = new Button("Crear Grupo", VaadinIcon.PLUS_CIRCLE.create(), e -> crear());
-        crearGrupo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        crearGrupo.getStyle().set("border-radius", "10px");
-        crearGrupo.setWidth("300px");
-
-        tabla = new Grid<>(Grupo.class);
-        tabla.removeAllColumns();
-        tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
-        tabla.setWidthFull();
-
-        HorizontalLayout tablaContainer = new HorizontalLayout(tabla);
-        tablaContainer.setWidth("80%");
-        tablaContainer.setJustifyContentMode(
-            com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.CENTER);
-
-        add(nombreGrupo, descripcion, crearGrupo, tablaContainer);
-
-        cargar();
+        add(titulo, tabla);
     }
 
-    private void crear() {
-        try {
-            grupoService.crearGrupo(
-                session.getLoginEnSesion(),
-                nombreGrupo.getValue(),
-                descripcion.getValue()
-            );
+    // ----------------------------------------------------------------------
+    // BOTÓN DE VER DETALLES (Abre modal)
+    // ----------------------------------------------------------------------
+    private Button crearBotonVer(Grupo g) {
+        Button btn = new Button("Ver",
+                VaadinIcon.EYE.create(),
+                e -> abrirDialogoGrupo(g));
 
-            Notification.show("Grupo creado exitosamente");
-            nombreGrupo.clear();
-            descripcion.clear();
-            cargar();
+        btn.getStyle().set("background-color", "#1976d2");
+        btn.getStyle().set("color", "white");
 
-        } catch (Exception ex) {
-            Notification.show("No fue posible crear el grupo: " + ex.getMessage());
-        }
+        return btn;
     }
 
-    private void cargar() {
-        tabla.setItems(grupoService.listarTodos());
-    }
+    // ----------------------------------------------------------------------
+    // DIALOGO DEL GRUPO
+    // ----------------------------------------------------------------------
+    private void abrirDialogoGrupo(Grupo grupo) {
 
-    private void validarSesion() {
-        if (session.getLoginEnSesion() == null) {
-            UI.getCurrent().navigate("login");
-        }
+        Dialog dialog = new Dialog();
+        dialog.setWidth("500px");
+
+        H3 titulo = new H3("Grupo: " + grupo.getNombreGrupo());
+        Paragraph desc = new Paragraph(grupo.getDescripcion());
+
+        // -------- LISTA DE PARTICIPANTES --------
+        VerticalLayout lista = new VerticalLayout();
+        lista.setPadding(false);
+
+        lista.getStyle().set("border", "1px solid #CCC");
+        lista.getStyle().set("max-height", "200px");
+        lista.getStyle().set("overflow-y", "auto");
+
+        // Se cargan dentro de la transacción → NO LANZA ERRORES
+        grupoService.obtenerNombresParticipantes(grupo.getId())
+                .forEach(nombre -> lista.add(new Paragraph(nombre)));
+
+        // -------- AÑADIR PARTICIPANTE --------
+        TextField campoLogin = new TextField("Usuario a añadir");
+        Button btnAdd = new Button("Añadir", VaadinIcon.USERS.create(), e -> {
+            try {
+                grupoService.agregarParticipante(grupo.getId(), campoLogin.getValue());
+                lista.add(new Paragraph(campoLogin.getValue()));
+                campoLogin.clear();
+            } catch (Exception ex) {
+                lista.add(new Paragraph("⚠ " + ex.getMessage()));
+            }
+        });
+
+        btnAdd.getStyle().set("background-color", "#43A047");
+        btnAdd.getStyle().set("color", "white");
+
+        // Cerrar
+        Button cerrar = new Button("Cerrar", e -> dialog.close());
+
+        dialog.add(
+                titulo,
+                desc,
+                new H3("Participantes"),
+                lista,
+                new HorizontalLayout(campoLogin, btnAdd),
+                cerrar
+        );
+
+        dialog.open();
     }
 }

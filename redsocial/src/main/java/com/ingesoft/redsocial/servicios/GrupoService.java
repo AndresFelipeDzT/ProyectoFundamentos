@@ -1,106 +1,81 @@
 package com.ingesoft.redsocial.servicios;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.ingesoft.redsocial.excepciones.GrupoExistenteException;
-import com.ingesoft.redsocial.excepciones.GrupoNotFoundException;
-import com.ingesoft.redsocial.excepciones.UsuarioAlreadyInGroupException;
-import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Grupo;
 import com.ingesoft.redsocial.modelo.ParticipantesGrupo;
 import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.repositorios.GrupoRepository;
+import com.ingesoft.redsocial.repositorios.ParticipantesGrupoRepository;
 import com.ingesoft.redsocial.repositorios.UsuarioRepository;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
 @Service
-@Transactional
 public class GrupoService {
 
-    private final GrupoRepository grupoRepo;
-    private final UsuarioRepository usuarioRepo;
+    @Autowired
+    private GrupoRepository grupoRepository;
 
-    public GrupoService(GrupoRepository grupoRepo, UsuarioRepository usuarioRepo) {
-        this.grupoRepo = grupoRepo;
-        this.usuarioRepo = usuarioRepo;
-    }
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
-    // Crear grupo: dentro de la transacción, inicializa participantes y setea el contador
-    public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
-            throws UsuarioNotFoundException, GrupoExistenteException {
+    @Autowired
+    private ParticipantesGrupoRepository participantesRepo;
 
-        if (grupoRepo.findByNombreGrupoIgnoreCase(nombre).isPresent()) {
-            throw new GrupoExistenteException("Ya existe un grupo con ese nombre");
+    // Crear grupo -----------------------------------------
+    @Transactional
+    public Grupo crearGrupo(String nombre, String descripcion, String creadorLogin) {
+
+        if (grupoRepository.existsByNombreGrupoIgnoreCase(nombre)) {
+            throw new RuntimeException("Ya existe un grupo con ese nombre");
         }
 
-        Usuario creador = usuarioRepo.findById(loginCreador)
-                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
+        Usuario creador = usuarioRepository.findById(creadorLogin)
+                .orElseThrow(() -> new RuntimeException("Creador no encontrado"));
 
-        Grupo grupo = new Grupo();
-        grupo.setNombreGrupo(nombre);
-        grupo.setDescripcion(descripcion);
-        grupo.setCreador(creador);
+        Grupo grupo = new Grupo(nombre, descripcion, creador);
+        grupoRepository.save(grupo);
 
-        // Agregar creador como participante
-        ParticipantesGrupo participanteCreador = new ParticipantesGrupo(creador, grupo);
-        grupo.getParticipantes().add(participanteCreador);
+        // El creador entra automáticamente
+        participantesRepo.save(new ParticipantesGrupo(creador, grupo));
 
-        Grupo guardado = grupoRepo.save(grupo);
-
-        // Inicializar el contador (importante: estamos dentro de la transacción)
-        guardado.setCantidadParticipantes(guardado.getParticipantes().size());
-
-        return guardado;
+        return grupo;
     }
 
-    // Unirse a grupo: añade participante y actualiza contador
-    public void unirseAGrupo(String loginUsuario, Long grupoId)
-            throws UsuarioNotFoundException, GrupoNotFoundException, UsuarioAlreadyInGroupException {
+    // Obtener todos ----------------------------------------
+    public List<Grupo> obtenerTodos() {
+        return grupoRepository.findAll();
+    }
 
-        Grupo grupo = grupoRepo.findById(grupoId)
-                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
+    // Cargar nombres realmente dentro de la transacción ----
+    @Transactional(readOnly = true)
+    public List<String> obtenerNombresParticipantes(Long grupoId) {
+        return participantesRepo.findByGrupoId(grupoId)
+                .stream()
+                .map(pg -> pg.getUsuario().getLogin())
+                .toList();
+    }
 
-        Usuario usuario = usuarioRepo.findById(loginUsuario)
-                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
+    // Agregar un usuario al grupo --------------------------
+    @Transactional
+    public void agregarParticipante(Long grupoId, String loginUsuario) {
 
-        boolean yaParticipa = grupo.getParticipantes().stream()
-                .anyMatch(p -> p.getUsuario().getLogin().equals(loginUsuario));
-
-        if (yaParticipa) {
-            throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
+        boolean yaExiste = participantesRepo.existsByGrupoIdAndUsuarioLogin(grupoId, loginUsuario);
+        if (yaExiste) {
+            throw new RuntimeException("El usuario ya pertenece al grupo");
         }
 
-        ParticipantesGrupo nuevo = new ParticipantesGrupo(usuario, grupo);
-        grupo.getParticipantes().add(nuevo);
+        Grupo grupo = grupoRepository.findById(grupoId)
+                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
 
-        // Guardamos el grupo y actualizamos el contador dentro de la transacción
-        Grupo guardado = grupoRepo.save(grupo);
-        guardado.setCantidadParticipantes(guardado.getParticipantes().size());
-    }
+        Usuario usuario = usuarioRepository.findById(loginUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-    // Listar todos: IMPORTANTÍSIMO — inicializa el contador para cada grupo
-    public List<Grupo> listarTodos() {
-        List<Grupo> grupos = grupoRepo.findAll();
-
-        // Estamos dentro de la transacción: podemos leer participantes.size() sin error
-        for (Grupo g : grupos) {
-            int size = (g.getParticipantes() != null) ? g.getParticipantes().size() : 0;
-            g.setCantidadParticipantes(size);
-        }
-
-        return grupos;
-    }
-
-    // Obtener nombres de participantes (devuelve Strings; se ejecuta dentro de transacción)
-    public List<String> obtenerNombresParticipantes(Long grupoId) throws GrupoNotFoundException {
-        Grupo grupo = grupoRepo.findById(grupoId)
-                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
-
-        return grupo.getParticipantes().stream()
-                .map(p -> p.getUsuario().getLogin())
-                .collect(Collectors.toList());
+        ParticipantesGrupo participante = new ParticipantesGrupo(usuario, grupo);
+        participantesRepo.save(participante);
     }
 }
