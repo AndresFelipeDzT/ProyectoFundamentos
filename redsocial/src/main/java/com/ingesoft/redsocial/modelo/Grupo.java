@@ -29,43 +29,17 @@ public class Grupo {
         this.creador = creador;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public String getNombreGrupo() { return nombreGrupo; }
+    public void setNombreGrupo(String nombreGrupo) { this.nombreGrupo = nombreGrupo; }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public Usuario getCreador() { return creador; }
+    public void setCreador(Usuario creador) { this.creador = creador; }
+    public List<ParticipantesGrupo> getParticipantes() { return participantes; }
+    public void setParticipantes(List<ParticipantesGrupo> participantes) { this.participantes = participantes; }
 
-    public String getNombreGrupo() {
-        return nombreGrupo;
-    }
-
-    public void setNombreGrupo(String nombreGrupo) {
-        this.nombreGrupo = nombreGrupo;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public Usuario getCreador() {
-        return creador;
-    }
-
-    public void setCreador(Usuario creador) {
-        this.creador = creador;
-    }
-
-    public List<ParticipantesGrupo> getParticipantes() {
-        return participantes;
-    }
-
-    public void setParticipantes(List<ParticipantesGrupo> participantes) {
-        this.participantes = participantes;
-    }
-
-    // ✅ Variable básica: número de participantes
+    // ✅ Variables básicas para Vaadin
     public int getCantidadParticipantes() {
         return participantes != null ? participantes.size() : 0;
     }

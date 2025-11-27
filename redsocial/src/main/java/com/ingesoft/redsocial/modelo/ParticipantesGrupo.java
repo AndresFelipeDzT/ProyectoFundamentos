@@ -21,29 +21,14 @@ public class ParticipantesGrupo {
     private Grupo grupo;
 
     public ParticipantesGrupo() {}
-
     public ParticipantesGrupo(Usuario usuario, Grupo grupo) {
         this.usuario = usuario;
         this.grupo = grupo;
     }
 
-    public Usuario getUsuario() {
-        return this.usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
-    }
-
-    public Grupo getGrupo() {
-        return this.grupo;
-    }
-
-    public void setGrupo(Grupo grupo) {
-        this.grupo = grupo;
-    }
-
-    public Long getId() {
-        return this.id;
-    }
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public Grupo getGrupo() { return grupo; }
+    public void setGrupo(Grupo grupo) { this.grupo = grupo; }
+    public Long getId() { return id; }
 }

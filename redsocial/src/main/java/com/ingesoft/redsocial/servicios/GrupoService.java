@@ -5,15 +5,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ingesoft.redsocial.excepciones.GrupoExistenteException;
-import com.ingesoft.redsocial.excepciones.GrupoNotFoundException;
-import com.ingesoft.redsocial.excepciones.UsuarioAlreadyInGroupException;
-import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
-import com.ingesoft.redsocial.modelo.Grupo;
-import com.ingesoft.redsocial.modelo.ParticipantesGrupo;
-import com.ingesoft.redsocial.modelo.Usuario;
-import com.ingesoft.redsocial.repositorios.GrupoRepository;
-import com.ingesoft.redsocial.repositorios.UsuarioRepository;
+import com.ingesoft.redsocial.excepciones.*;
+import com.ingesoft.redsocial.modelo.*;
+import com.ingesoft.redsocial.repositorios.*;
 
 @Service
 @Transactional
@@ -27,7 +21,6 @@ public class GrupoService {
         this.usuarioRepo = usuarioRepo;
     }
 
-    // Crear grupo
     public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
             throws UsuarioNotFoundException, GrupoExistenteException {
 
@@ -44,15 +37,12 @@ public class GrupoService {
         grupo.setCreador(creador);
 
         // Agregar creador como participante
-        ParticipantesGrupo participanteCreador = new ParticipantesGrupo();
-        participanteCreador.setUsuario(creador);
-        participanteCreador.setGrupo(grupo);
+        ParticipantesGrupo participanteCreador = new ParticipantesGrupo(creador, grupo);
         grupo.getParticipantes().add(participanteCreador);
 
         return grupoRepo.save(grupo);
     }
 
-    // Unirse a grupo
     public void unirseAGrupo(String loginUsuario, Long grupoId)
             throws UsuarioNotFoundException, GrupoNotFoundException, UsuarioAlreadyInGroupException {
 
@@ -69,20 +59,17 @@ public class GrupoService {
             throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
         }
 
-        ParticipantesGrupo nuevoParticipante = new ParticipantesGrupo();
-        nuevoParticipante.setUsuario(usuario);
-        nuevoParticipante.setGrupo(grupo);
+        ParticipantesGrupo nuevoParticipante = new ParticipantesGrupo(usuario, grupo);
         grupo.getParticipantes().add(nuevoParticipante);
 
         grupoRepo.save(grupo);
     }
 
-    // Listar todos los grupos
     public List<Grupo> listarTodos() {
         return grupoRepo.findAll();
     }
 
-    // Obtener participantes como lista de Strings (variable básica)
+    // ✅ Obtener participantes como lista de Strings (variable básica)
     public List<String> obtenerNombresParticipantes(Long grupoId) throws GrupoNotFoundException {
         Grupo grupo = grupoRepo.findById(grupoId)
                 .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
