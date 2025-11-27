@@ -1,0 +1,19 @@
+[ {
+  "id" : 1764220788877,
+  "nombreGrupo" : "a",
+  "descripcion" : "",
+  "participantes" : [ {
+    "id" : null,
+    "usuario" : {
+      "login" : "romerocana",
+      "nombre" : "romerocana",
+      "password" : "$2a$10$Fymna3SkcTVPovPxE00vsuWhjo/Tz1XcE4jBIm40HeeiAuYMvFSs6",
+      "solicitudesEnviadas" : [ ],
+      "solicitudesRecibidas" : [ ],
+      "gruposCreados" : [ ],
+      "perfil" : null,
+      "publicaciones" : [ ],
+      "comentarios" : [ ]
+    }
+  } ]
+} ]
