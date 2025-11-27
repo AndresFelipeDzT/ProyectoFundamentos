@@ -37,7 +37,6 @@ public class GruposView extends VerticalLayout {
 
         UI.getCurrent().access(this::validarSesion);
 
-        // ********** MODIFICACIONES DE ESTILO **********
         setSizeFull();
         getStyle().set("background-color", "#E6F7FF");
         setAlignItems(Alignment.CENTER);
@@ -49,13 +48,11 @@ public class GruposView extends VerticalLayout {
         descripcion = new TextField("Descripción");
         descripcion.setWidth("300px");
 
-        // Botón Crear Grupo
         crearGrupo = new Button("Crear Grupo", VaadinIcon.PLUS_CIRCLE.create(), e -> crear());
         crearGrupo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         crearGrupo.getStyle().set("border-radius", "10px");
         crearGrupo.setWidth("300px");
 
-        // Tabla de grupos
         tabla = new Grid<>(Grupo.class);
         tabla.removeAllColumns();
         tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
@@ -99,8 +96,9 @@ public class GruposView extends VerticalLayout {
 
             nombreGrupo.clear();
             descripcion.clear();
-            cargar();
 
+            cargar();
+            tabla.getDataProvider().refreshAll();
         } catch (Exception ex) {
             Notification.show("No fue posible crear el grupo: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
         }

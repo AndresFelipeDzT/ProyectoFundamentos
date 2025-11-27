@@ -34,6 +34,7 @@ public class GrupoService {
         }
 
         Grupo grupo = new Grupo();
+        grupo.setId(System.currentTimeMillis()); // ID único temporal para JSON
         grupo.setNombreGrupo(nombre);
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);

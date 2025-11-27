@@ -16,15 +16,12 @@ public class AppData {
     private List<SolicitudAmistad> solicitudes = new ArrayList<>();
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final File archivo = new File("appdata.json"); // archivo JSON global
+    private final File archivo = new File("appdata.json");
 
     public AppData() {
         cargarDatos();
     }
 
-    // ===============================
-    // GETTERS
-    // ===============================
     public List<Usuario> getUsuarios() {
         return usuarios;
     }
@@ -37,7 +34,6 @@ public class AppData {
         return solicitudes;
     }
 
-    // Obtener participantes de un grupo
     public List<ParticipantesGrupo> getParticipantes(Long grupoId) {
         for (Grupo g : grupos) {
             if (g.getId().equals(grupoId)) {
@@ -47,9 +43,6 @@ public class AppData {
         return new ArrayList<>();
     }
 
-    // ===============================
-    // Cargar datos desde JSON
-    // ===============================
     private void cargarDatos() {
         try {
             if (archivo.exists()) {
@@ -63,9 +56,6 @@ public class AppData {
         }
     }
 
-    // ===============================
-    // Guardar cambios en JSON
-    // ===============================
     public void guardarCambios() {
         try {
             mapper.writerWithDefaultPrettyPrinter().writeValue(archivo, this);
