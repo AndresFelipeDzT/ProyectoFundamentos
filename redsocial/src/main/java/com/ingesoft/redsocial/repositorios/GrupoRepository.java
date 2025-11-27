@@ -13,7 +13,7 @@ public interface GrupoRepository extends JpaRepository<Grupo, Long> {
 
         // Busca un grupo por nombre exacto
     Optional<Grupo> findByNombreGrupo(String nombreGrupo);
-
+    Optional<Grupo> findByNombreGrupoIgnoreCase(String nombreGrupo);
     List<Grupo> findByNombreGrupoContainingIgnoreCase(String nombre);
 
 }

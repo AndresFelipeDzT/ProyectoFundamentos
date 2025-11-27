@@ -1,16 +1,19 @@
 package com.ingesoft.redsocial.ui;
 
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+// Nueva importación para centrar la tabla
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout; 
+
 import com.ingesoft.redsocial.modelo.Grupo;
 import com.ingesoft.redsocial.servicios.GrupoService;
+import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
 import com.ingesoft.redsocial.ui.servicio.SessionService;
-import com.ingesoft.redsocial.excepciones.GrupoExistenteException;
-import com.ingesoft.redsocial.excepciones.GrupoNotFoundException;
-import com.ingesoft.redsocial.excepciones.UsuarioAlreadyInGroupException;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
@@ -18,80 +21,92 @@ import com.vaadin.flow.router.Route;
 @Route("grupos")
 public class GruposView extends VerticalLayout {
 
-    private final SessionService session;
-    private final GrupoService grupoService;
+    SessionService session;
+    NavegacionComponent nav;
+    GrupoService grupoService;
 
-    private final TextField nombreGrupo;
-    private final TextField descripcion;
-    private final Button crearGrupo;
-    private final Grid<Grupo> tabla;
+    TextField nombreGrupo;
+    TextField descripcion;
+    Button crearGrupo;
 
-    public GruposView(SessionService session, GrupoService grupoService) {
+    Grid<Grupo> tabla;
+
+    public GruposView(SessionService session, NavegacionComponent nav, GrupoService grupoService) {
+
         this.session = session;
+        this.nav = nav;
         this.grupoService = grupoService;
 
+        UI.getCurrent().access(this::validarSesion);
+
+        // ********** MODIFICACIONES DE ESTILO **********
+        
+        // 1. Aplicar gama de colores azul de fondo
         setSizeFull();
-        setPadding(true);
-        setSpacing(true);
+        getStyle().set("background-color", "#E6F7FF"); // Azul claro
+        setAlignItems(Alignment.CENTER); // Centrar el contenido horizontalmente (campos, botón)
+        
+        add(nav);
 
-        // Campos de creación de grupo
         nombreGrupo = new TextField("Nombre del grupo");
+        nombreGrupo.setWidth("300px"); 
         descripcion = new TextField("Descripción");
-        crearGrupo = new Button("Crear Grupo", e -> crear());
-        crearGrupo.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        descripcion.setWidth("300px");
 
-        // Tabla de grupos
-        tabla = new Grid<>(Grupo.class, false);
-        tabla.setWidthFull();
-        tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo").setAutoWidth(true);
-        tabla.addColumn(g -> g.getParticipantes().size()).setHeader("Miembros").setAutoWidth(true);
-        tabla.addComponentColumn(g -> {
-            Button unirse = new Button("Unirse", e -> {
-                try {
-                    grupoService.unirseAGrupo(session.getLoginEnSesion(), g.getId());
-                    Notification.show("Te uniste al grupo '" + g.getNombreGrupo() + "'", 3000, Notification.Position.TOP_CENTER);
-                    tabla.setItems(grupoService.listarTodos());
-                } catch (UsuarioAlreadyInGroupException ex) {
-                    Notification.show("Ya eres miembro de este grupo", 3000, Notification.Position.TOP_CENTER);
-                } catch (GrupoNotFoundException ex) {
-                    Notification.show("Grupo no encontrado, contacte al administrador", 3000, Notification.Position.TOP_CENTER);
-                } catch (Exception ex) {
-                    Notification.show("Error inesperado, contacte al administrador", 3000, Notification.Position.TOP_CENTER);
-                }
-            });
-            unirse.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            return unirse;
-        }).setHeader("Acción");
+        // Botón Crear Grupo
+        crearGrupo = new Button("Crear Grupo", VaadinIcon.PLUS_CIRCLE.create(), e -> crear());
+        crearGrupo.addThemeVariants(
+            ButtonVariant.LUMO_PRIMARY,
+            ButtonVariant.LUMO_LARGE
+        );
+        crearGrupo.getStyle().set("border-radius", "10px");
+        crearGrupo.setWidth("300px");
+        
+        tabla = new Grid<>(Grupo.class);
+        tabla.removeAllColumns();
+        tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
+        // tabla.setWidth("70%"); // Eliminamos esta línea para usar el layout de centrado
 
+        // 2. Centrar la Tabla dentro de un HorizontalLayout
         HorizontalLayout tablaContainer = new HorizontalLayout(tabla);
-        tablaContainer.setWidthFull();
+        tablaContainer.setWidth("80%"); // Define el ancho del contenedor de la tabla (ajusta si es necesario)
+        tablaContainer.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.CENTER); // Centra la tabla dentro de este contenedor
+        tabla.setWidthFull(); // Hace que la tabla ocupe todo el ancho de su contenedor (tablaContainer)
 
-        // Añadir todos los componentes
+        // 3. Añadir todos los componentes a la vista
         add(nombreGrupo, descripcion, crearGrupo, tablaContainer);
 
-        // Cargar la lista de grupos
+        // ********** FIN DE MODIFICACIONES DE ESTILO **********
+        
         cargar();
     }
 
     private void crear() {
         try {
-            grupoService.crearGrupo(session.getLoginEnSesion(), nombreGrupo.getValue(), descripcion.getValue());
-            Notification.show("Grupo creado exitosamente", 3000, Notification.Position.TOP_CENTER);
+            grupoService.crearGrupo(
+                session.getLoginEnSesion(),
+                nombreGrupo.getValue(),
+                descripcion.getValue()
+            );
+
+            Notification.show("Grupo creado exitosamente");
             nombreGrupo.clear();
             descripcion.clear();
-            tabla.setItems(grupoService.listarTodos());
-        } catch (GrupoExistenteException ex) {
-            Notification.show("Ya existe un grupo con ese nombre", 3000, Notification.Position.TOP_CENTER);
+            cargar();
+
         } catch (Exception ex) {
-            Notification.show("Error creando grupo, contacte al administrador", 3000, Notification.Position.TOP_CENTER);
+            Notification.show("No fue posible crear el grupo: " + ex.getMessage());
         }
     }
 
     private void cargar() {
-        try {
-            tabla.setItems(grupoService.listarTodos());
-        } catch (Exception ex) {
-            Notification.show("Error cargando grupos, contacte al administrador", 3000, Notification.Position.TOP_CENTER);
+        tabla.setItems(grupoService.listarTodos());
+    }
+
+    private void validarSesion() {
+        if (session.getLoginEnSesion() == null) {
+            UI.getCurrent().navigate("login");
         }
+    
     }
 }
