@@ -18,9 +18,14 @@ public class Grupo {
     @JoinColumn(name = "creador_login")
     private Usuario creador;
 
-    // Esta relación NO se usa directamente en Vaadin
+    // colección LAZY: OK, pero NO permitirá que la UI la inicialice directamente
     @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ParticipantesGrupo> participantes = new ArrayList<>();
+
+    // Campo transitorio que contendrá el número de participantes
+    // Se rellenará desde el servicio (dentro de la transacción)
+    @Transient
+    private Integer cantidadParticipantes;
 
     public Grupo() {}
 
@@ -35,13 +40,19 @@ public class Grupo {
     public Usuario getCreador() { return creador; }
     public void setCreador(Usuario creador) { this.creador = creador; }
 
-    // ❗ Vaadin solo verá este número, no la lista
+    // Getter del listado (no se usa en la UI directamente)
+    public List<ParticipantesGrupo> getParticipantes() { return participantes; }
+    public void setParticipantes(List<ParticipantesGrupo> participantes) { this.participantes = participantes; }
+
+    // Getter seguro para que Vaadin lea sólo el valor primitivo (sin tocar la colección LAZY)
     public int getCantidadParticipantes() {
-        return participantes != null ? participantes.size() : 0;
+        // Si el servicio ya llenó cantidadParticipantes, devolverlo.
+        // Si no, devolver 0 (NO acceder a participantes.size() aquí).
+        return cantidadParticipantes != null ? cantidadParticipantes : 0;
     }
 
-    // ❗ Este getter NO se usa fuera de servicio
-    public List<ParticipantesGrupo> getParticipantes() { 
-        return participantes; 
+    // Setter que el servicio usará para inicializar el valor dentro de la transacción
+    public void setCantidadParticipantes(Integer cantidadParticipantes) {
+        this.cantidadParticipantes = cantidadParticipantes;
     }
 }

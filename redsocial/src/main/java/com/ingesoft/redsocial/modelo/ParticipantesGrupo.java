@@ -28,7 +28,9 @@ public class ParticipantesGrupo {
     }
 
     public Long getId() { return id; }
-
     public Usuario getUsuario() { return usuario; }
     public Grupo getGrupo() { return grupo; }
+
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+    public void setGrupo(Grupo grupo) { this.grupo = grupo; }
 }
