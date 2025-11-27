@@ -1,6 +1,7 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -44,11 +45,10 @@ public class GrupoService {
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
 
-        // Crear objeto ParticipantesGrupo para el creador
+        // Inicializar lista de participantes y agregar creador
         ParticipantesGrupo participanteCreador = new ParticipantesGrupo();
         participanteCreador.setUsuario(creador);
         participanteCreador.setGrupo(grupo);
-
         grupo.getParticipantes().add(participanteCreador);
 
         return grupoRepo.save(grupo);
@@ -64,18 +64,17 @@ public class GrupoService {
         Usuario usuario = usuarioRepo.findById(loginUsuario)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
-        boolean yaEsMiembro = grupo.getParticipantes().stream()
+        boolean yaParticipa = grupo.getParticipantes().stream()
                 .anyMatch(p -> p.getUsuario().getLogin().equals(loginUsuario));
 
-        if (yaEsMiembro) {
+        if (yaParticipa) {
             throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
         }
 
-        ParticipantesGrupo participante = new ParticipantesGrupo();
-        participante.setUsuario(usuario);
-        participante.setGrupo(grupo);
-
-        grupo.getParticipantes().add(participante);
+        ParticipantesGrupo nuevoParticipante = new ParticipantesGrupo();
+        nuevoParticipante.setUsuario(usuario);
+        nuevoParticipante.setGrupo(grupo);
+        grupo.getParticipantes().add(nuevoParticipante);
 
         grupoRepo.save(grupo);
     }
@@ -90,7 +89,6 @@ public class GrupoService {
         Grupo grupo = grupoRepo.findById(grupoId)
                 .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
 
-        // Devuelve solo usuarios
         return grupo.getParticipantes().stream()
                 .map(ParticipantesGrupo::getUsuario)
                 .collect(Collectors.toList());
