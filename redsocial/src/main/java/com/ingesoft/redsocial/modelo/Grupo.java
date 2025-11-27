@@ -65,17 +65,8 @@ public class Grupo {
         this.participantes = participantes;
     }
 
-    // Método para devolver nombres de usuarios (variables básicas)
-    public List<String> getNombresParticipantes() {
-        List<String> nombres = new ArrayList<>();
-        for (ParticipantesGrupo p : participantes) {
-            nombres.add(p.getUsuario().getLogin());
-        }
-        return nombres;
-    }
-
-    // Número de participantes (variable básica)
+    // ✅ Variable básica: número de participantes
     public int getCantidadParticipantes() {
-        return participantes.size();
+        return participantes != null ? participantes.size() : 0;
     }
 }

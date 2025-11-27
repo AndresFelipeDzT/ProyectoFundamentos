@@ -1,13 +1,7 @@
 package com.ingesoft.redsocial.modelo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.*;
 
 @Entity
 public class ParticipantesGrupo {
@@ -33,12 +27,10 @@ public class ParticipantesGrupo {
         this.grupo = grupo;
     }
 
-    // Getter explícito
     public Usuario getUsuario() {
         return this.usuario;
     }
 
-    // Setter explícito
     public void setUsuario(Usuario usuario) {
         this.usuario = usuario;
     }

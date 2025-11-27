@@ -7,16 +7,16 @@ import com.ingesoft.redsocial.ui.servicio.SessionService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.dialog.Dialog;
 
 import java.util.List;
 
@@ -47,7 +47,7 @@ public class GruposView extends VerticalLayout {
         add(nav);
 
         nombreGrupo = new TextField("Nombre del grupo");
-        nombreGrupo.setWidth("300px");
+        nombreGrupo.setWidth("300px"); 
         descripcion = new TextField("Descripción");
         descripcion.setWidth("300px");
 
@@ -56,19 +56,17 @@ public class GruposView extends VerticalLayout {
         crearGrupo.getStyle().set("border-radius", "10px");
         crearGrupo.setWidth("300px");
 
-        tabla = new Grid<>(Grupo.class);
-        tabla.removeAllColumns();
+        tabla = new Grid<>(Grupo.class, false);
         tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
         tabla.addColumn(Grupo::getDescripcion).setHeader("Descripción");
         tabla.addColumn(Grupo::getCantidadParticipantes).setHeader("Participantes");
 
-        // Botón "Ver detalles / Añadir participante"
-        tabla.addComponentColumn(grupo -> {
-            Button detalle = new Button("Detalles", VaadinIcon.USERS.create());
-            detalle.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
-            detalle.addClickListener(e -> abrirModal(grupo));
-            return detalle;
-        }).setHeader("Acciones");
+        // Botón Añadir participante en cada fila
+        tabla.addComponentColumn(gr -> {
+            Button btn = new Button("Añadir", VaadinIcon.USER.create());
+            btn.addClickListener(ev -> abrirModalParticipantes(gr));
+            return btn;
+        }).setHeader("Acción");
 
         HorizontalLayout tablaContainer = new HorizontalLayout(tabla);
         tablaContainer.setWidth("80%");
@@ -82,7 +80,11 @@ public class GruposView extends VerticalLayout {
 
     private void crear() {
         try {
-            grupoService.crearGrupo(session.getLoginEnSesion(), nombreGrupo.getValue(), descripcion.getValue());
+            grupoService.crearGrupo(
+                session.getLoginEnSesion(),
+                nombreGrupo.getValue(),
+                descripcion.getValue()
+            );
             Notification.show("Grupo creado exitosamente");
             nombreGrupo.clear();
             descripcion.clear();
@@ -102,56 +104,34 @@ public class GruposView extends VerticalLayout {
         }
     }
 
-    // Modal flotante con lista de participantes y añadir
-    private void abrirModal(Grupo grupo) {
-        Dialog modal = new Dialog();
-        modal.setWidth("500px");
-        modal.setHeight("400px");
+    // Modal de participantes
+    private void abrirModalParticipantes(Grupo grupo) {
+        Dialog dialog = new Dialog();
+        dialog.setWidth("500px");
 
-        VerticalLayout layout = new VerticalLayout();
-        layout.setPadding(false);
-        layout.setSpacing(true);
+        Div titulo = new Div();
+        titulo.setText("Grupo: " + grupo.getNombreGrupo());
 
-        // Encabezado + cerrar
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        header.add(new Div() {{ setText(grupo.getNombreGrupo()); }});
-        Button cerrar = new Button("X", e -> modal.close());
-        header.add(cerrar);
-
-        // Descripción
         Div desc = new Div();
-        desc.setText(grupo.getDescripcion());
+        desc.setText("Descripción: " + grupo.getDescripcion());
 
-        // Lista de participantes
-        VerticalLayout listaParticipantes = new VerticalLayout();
-        listaParticipantes.setHeight("200px");
+        Div listaParticipantes = new Div();
+        listaParticipantes.getStyle().set("max-height", "200px");
         listaParticipantes.getStyle().set("overflow", "auto");
-
         try {
             List<String> participantes = grupoService.obtenerNombresParticipantes(grupo.getId());
             participantes.forEach(p -> listaParticipantes.add(new Div() {{ setText(p); }}));
-        } catch (Exception ex) {
-            Notification.show("Error cargando participantes");
+        } catch (Exception e) {
+            listaParticipantes.add(new Div() {{ setText("No se pudo cargar participantes"); }});
         }
 
-        // Botón añadir participante (login de sesión)
-        Button añadir = new Button("Añadir participante", e -> {
-            try {
-                grupoService.añadirParticipante(grupo, session.getLoginEnSesion());
-                Notification.show("Te uniste al grupo " + grupo.getNombreGrupo());
-                // refrescar lista
-                listaParticipantes.removeAll();
-                grupoService.obtenerNombresParticipantes(grupo.getId())
-                        .forEach(p -> listaParticipantes.add(new Div() {{ setText(p); }}));
-            } catch (Exception ex) {
-                Notification.show(ex.getMessage());
-            }
+        Button cerrar = new Button("X", e -> dialog.close());
+        Button añadir = new Button("Añadir participante", VaadinIcon.USER.create(), e -> {
+            // Lógica para añadir participante
         });
 
-        layout.add(header, desc, listaParticipantes, añadir);
-        modal.add(layout);
-        modal.open();
+        VerticalLayout contenido = new VerticalLayout(titulo, desc, listaParticipantes, añadir, cerrar);
+        dialog.add(contenido);
+        dialog.open();
     }
 }
