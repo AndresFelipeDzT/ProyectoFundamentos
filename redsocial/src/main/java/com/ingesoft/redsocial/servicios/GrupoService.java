@@ -1,10 +1,11 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.ingesoft.redsocial.excepciones.GrupoExistenteException;
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Grupo;
 import com.ingesoft.redsocial.modelo.ParticipantesGrupo;
@@ -13,28 +14,34 @@ import com.ingesoft.redsocial.repositorios.GrupoRepository;
 import com.ingesoft.redsocial.repositorios.ParticipantesGrupoRepository;
 import com.ingesoft.redsocial.repositorios.UsuarioRepository;
 
-import jakarta.transaction.Transactional;
-
 @Service
 @Transactional
 public class GrupoService {
 
     @Autowired
-    GrupoRepository grupos;
+    private GrupoRepository grupos;
 
     @Autowired
-    UsuarioRepository usuarios;
+    private UsuarioRepository usuarios;
 
     @Autowired
-    ParticipantesGrupoRepository participaciones;
-
+    private ParticipantesGrupoRepository participaciones;
 
     // Crear un grupo
     public Grupo crearGrupo(String loginCreador, String nombre, String descripcion) 
-            throws UsuarioNotFoundException {
+            throws UsuarioNotFoundException, GrupoExistenteException {
+
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del grupo no puede estar vacío");
+        }
 
         if (!usuarios.existsById(loginCreador)) {
             throw new UsuarioNotFoundException("El usuario creador no existe");
+        }
+
+        // Verificar nombre duplicado
+        if (grupos.findByNombreGrupo(nombre).isPresent()) {
+            throw new GrupoExistenteException(nombre);
         }
 
         Usuario creador = usuarios.findById(loginCreador).get();
@@ -47,20 +54,17 @@ public class GrupoService {
         return grupos.save(grupo);
     }
 
-
     // Listar todos los grupos
     public List<Grupo> listarTodos() {
         return grupos.findAll();
     }
-
 
     // Buscar grupos por nombre
     public List<Grupo> buscarPorNombre(String filtro) {
         return grupos.findByNombreGrupoContainingIgnoreCase(filtro);
     }
 
-
-    // Unirse a grupo
+    // Unirse a un grupo
     public void unirseAGrupo(String login, Long idGrupo) throws UsuarioNotFoundException {
 
         if (!usuarios.existsById(login)) {
@@ -90,4 +94,3 @@ public class GrupoService {
         return participaciones.findByGrupoId(grupoId);
     }
 }
-
