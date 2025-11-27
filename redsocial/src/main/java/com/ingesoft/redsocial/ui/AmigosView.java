@@ -19,37 +19,33 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-
 @Route(value = "amigos")
 @PageTitle("Amigos")
 @AnonymousAllowed
 public class AmigosView extends VerticalLayout {
 
-    // == Servicios de la aplicación
-
-    SessionService sessionService;
-    UsuarioService usuarioService;
-    SolicitudAmistadService solicitudAmistadService;
+    // == Servicios
+    private final SessionService sessionService;
+    private final UsuarioService usuarioService;
+    private final SolicitudAmistadService solicitudAmistadService;
 
     // == Componentes
-    NavegacionComponent navegacion;
-    TabSheet tabSheet;
-    Grid<Usuario> tablaUsuarios;
-    Grid<Usuario> tablaAmigos;
-    Grid<SolicitudAmistad> tablaSolicitudes;
-    Button enviarSolicitud;
-    Button aceptarSolicitud;
-    Button rechazarSolicitud;
-
+    private final NavegacionComponent navegacion;
+    private final TabSheet tabSheet;
+    private final Grid<Usuario> tablaUsuarios;
+    private final Grid<Usuario> tablaAmigos;
+    private final Grid<SolicitudAmistad> tablaSolicitudes;
+    private final Button enviarSolicitud;
+    private final Button aceptarSolicitud;
+    private final Button rechazarSolicitud;
 
     // == Constructor
     public AmigosView(
-        SessionService sessionService,
-        UsuarioService usuarioService,
-        SolicitudAmistadService solicitudAmistadService,
-        NavegacionComponent navegacion
+            SessionService sessionService,
+            UsuarioService usuarioService,
+            SolicitudAmistadService solicitudAmistadService,
+            NavegacionComponent navegacion
     ) {
-
         this.sessionService = sessionService;
         this.usuarioService = usuarioService;
         this.solicitudAmistadService = solicitudAmistadService;
@@ -57,67 +53,51 @@ public class AmigosView extends VerticalLayout {
 
         UI.getCurrent().access(this::validarSesion);
 
-        // ********** MODIFICACIONES DE ESTILO **********
-        
-        // 1. Aplicar gama de colores azul de fondo
+        // Estilo general
         setSizeFull();
-        getStyle().set("background-color", "#E6F7FF"); // Azul claro
-        setPadding(true); 
+        getStyle().set("background-color", "#E6F7FF");
+        setPadding(true);
 
-        // Estilo de borde redondeado para los botones
         String borderRadius = "10px";
 
-        // ********** FIN MODIFICACIONES DE ESTILO **********
-
-        // Tab de Usuarios
+        // --- Grid de Usuarios ---
         tablaUsuarios = new Grid<>(Usuario.class);
         tablaUsuarios.removeAllColumns();
         tablaUsuarios.addColumn(Usuario::getNombre).setHeader("Usuario");
-        
-        HorizontalLayout usuariosButtons = new HorizontalLayout();
 
-        // 2. Botón Enviar Solicitud (Icono más estándar y redondeo)
+        HorizontalLayout usuariosButtons = new HorizontalLayout();
         enviarSolicitud = new Button("Enviar Solicitud", VaadinIcon.PLUS_CIRCLE.create(), e -> enviarSolicitud());
         enviarSolicitud.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        enviarSolicitud.getStyle().set("border-radius", borderRadius); 
-        
+        enviarSolicitud.getStyle().set("border-radius", borderRadius);
         usuariosButtons.add(enviarSolicitud);
-        
-        // Tab de Amigos
+
+        // --- Grid de Amigos ---
         tablaAmigos = new Grid<>(Usuario.class);
         tablaAmigos.removeAllColumns();
         tablaAmigos.addColumn(Usuario::getNombre).setHeader("Amigo");
 
-        // Tab de Solicitudes
+        // --- Grid de Solicitudes ---
         tablaSolicitudes = new Grid<>(SolicitudAmistad.class);
         tablaSolicitudes.removeAllColumns();
-        
-        // 🛑 FIX: LOGIC - La llamada a getOrigen() en SolicitudAmistad no está definida.
-        // Comentamos la línea problemática y usamos una columna temporal para que compile.
-        // DEBES DESCOMENTAR Y CAMBIAR 'getId' por el método correcto (ej: s -> s.getUsuarioOrigen().getNombre()).
-        // tablaSolicitudes.addColumn(s -> s.getOrigen().getNombre()).setHeader("Solicitante"); 
-        tablaSolicitudes.addColumn(SolicitudAmistad::getId).setHeader("ID Solicitud (Temporal)"); // Usado temporalmente para que compile
-        
+        tablaSolicitudes.addColumn(SolicitudAmistad::getId).setHeader("ID Solicitud (Temporal)");
+
         HorizontalLayout solicitudesButtons = new HorizontalLayout();
-        
-        // 3. Botón Aceptar Solicitud (Icono y redondeo)
         aceptarSolicitud = new Button("Aceptar", VaadinIcon.CHECK.create(), e -> aceptarSolicitud());
         aceptarSolicitud.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-        aceptarSolicitud.getStyle().set("border-radius", borderRadius); 
+        aceptarSolicitud.getStyle().set("border-radius", borderRadius);
 
-        // 4. Botón Rechazar Solicitud (Icono, estilo ERROR y redondeo)
         rechazarSolicitud = new Button("Rechazar", VaadinIcon.CLOSE.create(), e -> rechazarSolicitud());
         rechazarSolicitud.addThemeVariants(ButtonVariant.LUMO_ERROR);
-        rechazarSolicitud.getStyle().set("border-radius", borderRadius); 
+        rechazarSolicitud.getStyle().set("border-radius", borderRadius);
 
         solicitudesButtons.add(aceptarSolicitud, rechazarSolicitud);
 
-        // Configuración de pestañas
+        // --- TabSheet ---
         tabSheet = new TabSheet();
         tabSheet.setSizeFull();
 
         VerticalLayout usuariosLayout = new VerticalLayout(tablaUsuarios, usuariosButtons);
-        usuariosLayout.setPadding(true); 
+        usuariosLayout.setPadding(true);
         usuariosLayout.setSpacing(true);
         tabSheet.add("Usuarios", usuariosLayout);
 
@@ -125,118 +105,99 @@ public class AmigosView extends VerticalLayout {
         amigosLayout.setPadding(true);
         amigosLayout.setSpacing(true);
         tabSheet.add("Amigos", amigosLayout);
-        
+
         VerticalLayout solicitudesLayout = new VerticalLayout(tablaSolicitudes, solicitudesButtons);
         solicitudesLayout.setPadding(true);
         solicitudesLayout.setSpacing(true);
         tabSheet.add("Solicitudes", solicitudesLayout);
-        
-        tabSheet.addSelectedChangeListener(e -> {
-            if (e.getSelectedTab().getLabel().equals("Usuarios")) {
-                cargaUsuarios();
-            } else if (e.getSelectedTab().getLabel().equals("Amigos")) {
-                cargaAmigos();
-            } else if (e.getSelectedTab().getLabel().equals("Solicitudes")) {
-                cargaSolicitudes();
-            }
-        });
 
+        // Cambios de pestañas
+        tabSheet.addSelectedChangeListener(e -> {
+            String label = e.getSelectedTab().getLabel();
+            if ("Usuarios".equals(label)) cargaUsuarios();
+            else if ("Amigos".equals(label)) cargaAmigos();
+            else if ("Solicitudes".equals(label)) cargaSolicitudes();
+        });
 
         add(navegacion, tabSheet);
 
-        // carga el contenido de la primera pestaña
+        // Carga inicial
         cargaUsuarios();
-
     }
 
-    // == Controladores 
-
-    public void validarSesion() {
+    // == Controladores
+    private void validarSesion() {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
         }
     }
 
-    public void enviarSolicitud() {
+    private void enviarSolicitud() {
         try {
             Usuario usuario = tablaUsuarios.getSelectedItems().iterator().next();
-            
-            // 🛑 FIX: LOGIC - La firma del método enviarSolicitud(String, String) no existe en tu SolicitudAmistadService.
-            // DEBES VERIFICAR la firma de tu método y corregirla si es necesario.
-            // Por ejemplo, si tu método se llama 'solicitarAmistad':
-            // solicitudAmistadService.solicitarAmistad(sessionService.getLoginEnSesion(), usuario.getLogin());
-            solicitudAmistadService.enviarSolicitud(
-                sessionService.getLoginEnSesion(),
-                usuario.getLogin()
+            solicitudAmistadService.enviarSolicitudAmistad(
+                    sessionService.getLoginEnSesion(),
+                    usuario.getLogin()
             );
-            
             Notification.show("Solicitud enviada a " + usuario.getNombre());
             cargaUsuarios();
-
         } catch (Exception e) {
             Notification.show("Error enviando solicitud: " + e.getMessage());
         }
     }
 
-    public void aceptarSolicitud() {
+    private void aceptarSolicitud() {
         try {
             SolicitudAmistad solicitud = tablaSolicitudes.getSelectedItems().iterator().next();
             solicitudAmistadService.responderSolicitud(
-                sessionService.getLoginEnSesion(),
-                solicitud.getId(), 
-                true
+                    sessionService.getLoginEnSesion(),
+                    solicitud.getId(),
+                    true
             );
             cargaAmigos();
             cargaSolicitudes();
-
         } catch (Exception e) {
             Notification.show("Error aceptando invitación: " + e.getMessage());
         }
     }
 
-    public void rechazarSolicitud() {
+    private void rechazarSolicitud() {
         try {
             SolicitudAmistad solicitud = tablaSolicitudes.getSelectedItems().iterator().next();
             solicitudAmistadService.responderSolicitud(
-                sessionService.getLoginEnSesion(),
-                solicitud.getId(), 
-                false
+                    sessionService.getLoginEnSesion(),
+                    solicitud.getId(),
+                    false
             );
             cargaAmigos();
             cargaSolicitudes();
-
         } catch (Exception e) {
             Notification.show("Error rechazando invitación: " + e.getMessage());
         }
     }
 
-
-    // == Otros Métodos
-
-    public void cargaUsuarios() {
+    // == Carga de datos
+    private void cargaUsuarios() {
         try {
-            tablaUsuarios.setItems(usuarioService.getPersonas());
+            tablaUsuarios.setItems(usuarioService.getUsuarios());
         } catch (Exception e) {
             Notification.show("Error cargando usuarios: " + e.getMessage());
-        }    
+        }
     }
 
-    public void cargaAmigos() {
-        String login = sessionService.getLoginEnSesion();
+    private void cargaAmigos() {
         try {
-            tablaAmigos.setItems(solicitudAmistadService.obtenerAmigos(login));
+            tablaAmigos.setItems(solicitudAmistadService.obtenerAmigos(sessionService.getLoginEnSesion()));
         } catch (Exception e) {
-            Notification.show("Error cargando amigos del usuario " + login + ": " + e.getMessage());
-        }    
+            Notification.show("Error cargando amigos: " + e.getMessage());
+        }
     }
 
-    public void cargaSolicitudes() {
-        String login = sessionService.getLoginEnSesion();
+    private void cargaSolicitudes() {
         try {
-            tablaSolicitudes.setItems(solicitudAmistadService.obtenerSolicitudesPendientes(login));
+            tablaSolicitudes.setItems(solicitudAmistadService.obtenerSolicitudesPendientes(sessionService.getLoginEnSesion()));
         } catch (Exception e) {
-            Notification.show("Error cargando solicitudes del usuario " + login + ": " + e.getMessage());
-        }    
+            Notification.show("Error cargando solicitudes: " + e.getMessage());
+        }
     }
-
 }
