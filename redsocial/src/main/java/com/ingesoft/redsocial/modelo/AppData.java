@@ -5,25 +5,25 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class AppData {
+
+    private static final String ARCHIVO = "appdata.json";
 
     private List<Usuario> usuarios = new ArrayList<>();
     private List<Grupo> grupos = new ArrayList<>();
 
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final File archivoGrupos = new File("grupos.json");
-    private final File archivoUsuarios = new File("usuarios.json");
+    private final ObjectMapper mapper;
 
     public AppData() {
-        cargarDatos();
+        mapper = new ObjectMapper();
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+        cargar();
     }
 
+    // Getters
     public List<Usuario> getUsuarios() {
         return usuarios;
     }
@@ -32,42 +32,36 @@ public class AppData {
         return grupos;
     }
 
-    /**
-     * Guardar cambios en JSON
-     */
+    // Guardar cambios en appdata.json
     public void guardarCambios() {
         try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(archivoGrupos, grupos);
-            mapper.writerWithDefaultPrettyPrinter().writeValue(archivoUsuarios, usuarios);
+            mapper.writeValue(new File(ARCHIVO), this);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Cargar datos desde archivos JSON
-     */
-    private void cargarDatos() {
-        try {
-            if (archivoGrupos.exists()) {
-                grupos = mapper.readValue(archivoGrupos, new TypeReference<List<Grupo>>() {});
+    // Cargar datos de appdata.json
+    private void cargar() {
+        File file = new File(ARCHIVO);
+        if (file.exists()) {
+            try {
+                AppData data = mapper.readValue(file, AppData.class);
+                this.usuarios = data.getUsuarios();
+                this.grupos = data.getGrupos();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            if (archivoUsuarios.exists()) {
-                usuarios = mapper.readValue(archivoUsuarios, new TypeReference<List<Usuario>>() {});
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
-    /**
-     * Obtener participantes de un grupo por ID
-     */
+    // Obtener participantes de un grupo
     public List<ParticipantesGrupo> getParticipantes(Long grupoId) {
-        return grupos.stream()
-                .filter(g -> g.getId().equals(grupoId))
-                .findFirst()
-                .map(Grupo::getParticipantes)
-                .orElse(List.of());
+        for (Grupo g : grupos) {
+            if (g.getId().equals(grupoId)) {
+                return g.getParticipantes();
+            }
+        }
+        return new ArrayList<>();
     }
 }

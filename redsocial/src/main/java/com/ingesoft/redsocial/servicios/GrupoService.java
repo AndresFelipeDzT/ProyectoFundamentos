@@ -20,46 +20,38 @@ public class GrupoService {
         this.data = data;
     }
 
-    /**
-     * Crear un grupo nuevo y agregar al creador como participante
-     */
+    // Crear grupo y agregar al creador como participante
     public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
             throws UsuarioNotFoundException, GrupoExistenteException {
 
-        // Buscar el usuario creador
         Usuario creador = data.getUsuarios().stream()
                 .filter(u -> u.getLogin().equals(loginCreador))
                 .findFirst()
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
-        // Validar que no exista un grupo con el mismo nombre
         if (data.getGrupos().stream().anyMatch(g -> g.getNombreGrupo().equalsIgnoreCase(nombre))) {
             throw new GrupoExistenteException("Ya existe un grupo con ese nombre");
         }
 
-        // Crear grupo
         Grupo grupo = new Grupo();
-        grupo.setId(System.currentTimeMillis()); // ID único temporal
+        grupo.setId(System.currentTimeMillis()); // ID único
         grupo.setNombreGrupo(nombre);
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
 
-        // Crear participante (el creador)
+        // Agregar al creador como participante
         ParticipantesGrupo participante = new ParticipantesGrupo();
         participante.setUsuario(creador);
         participante.setGrupo(grupo);
         grupo.getParticipantes().add(participante);
 
-        // Agregar grupo a la lista de AppData y guardar cambios en JSON
         data.getGrupos().add(grupo);
         data.guardarCambios();
 
         return grupo;
     }
 
-    /**
-     * Permite que un usuario se una a un grupo existente
-     */
+    // Unirse a grupo
     public void unirseAGrupo(String login, Long idGrupo) throws UsuarioNotFoundException {
         Usuario usuario = data.getUsuarios().stream()
                 .filter(u -> u.getLogin().equals(login))
@@ -81,21 +73,17 @@ public class GrupoService {
         ParticipantesGrupo participante = new ParticipantesGrupo();
         participante.setUsuario(usuario);
         participante.setGrupo(grupo);
-
         grupo.getParticipantes().add(participante);
+
         data.guardarCambios();
     }
 
-    /**
-     * Devuelve todos los grupos existentes
-     */
+    // Listar todos los grupos
     public List<Grupo> listarTodos() {
         return data.getGrupos();
     }
 
-    /**
-     * Devuelve los participantes de un grupo específico
-     */
+    // Obtener participantes de un grupo
     public List<ParticipantesGrupo> obtenerParticipantes(Long grupoId) {
         return data.getParticipantes(grupoId);
     }
