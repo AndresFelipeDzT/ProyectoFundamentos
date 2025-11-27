@@ -22,29 +22,35 @@ import com.vaadin.flow.component.textfield.TextField;
 @AnonymousAllowed
 public class LoginView extends Main {
 
-    SessionService session;
-    UsuarioService usuarioService;
-    TituloComponent tituloComponent;
+    private final SessionService session;
+    private final UsuarioService usuarioService;
+    private final TituloComponent tituloComponent;
 
     private final VerticalLayout mainLayout = new VerticalLayout();
     private final LoginForm loginForm = new LoginForm();
-    private final VerticalLayout registroLayout = new VerticalLayout();
 
     public LoginView(SessionService session, UsuarioService usuarioService, TituloComponent tituloComponent) {
         this.session = session;
         this.usuarioService = usuarioService;
         this.tituloComponent = tituloComponent;
 
-        // Layout principal
+        // Layout principal centrado con fondo
         mainLayout.setSizeFull();
         mainLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
         mainLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         mainLayout.getStyle().set("background-color", "#E6F7FF"); // azul claro opcional
 
+        // Título
+        tituloComponent.getStyle().set("font-size", "36px");
+        tituloComponent.getStyle().set("color", "#1a73e8");
+        mainLayout.add(tituloComponent);
+
+        // Mostrar login al inicio
         mostrarLogin();
         add(mainLayout);
     }
 
+    // =================== LOGIN ===================
     private void mostrarLogin() {
         mainLayout.removeAll();
         mainLayout.add(tituloComponent);
@@ -68,6 +74,28 @@ public class LoginView extends Main {
         loginForm.addLoginListener(event -> validaInicioSesion(event.getUsername(), event.getPassword()));
     }
 
+    private void validaInicioSesion(String username, String password) {
+        if (authenticate(username, password)) {
+            Notification.show("Inicio de sesión correcto para " + username);
+            session.setLoginEnSesion(username);
+            UI.getCurrent().navigate(""); // página principal
+        } else {
+            loginForm.setError(true);
+            Notification.show("Error iniciando sesión", 3000, Notification.Position.MIDDLE);
+        }
+    }
+
+    private boolean authenticate(String login, String password) {
+        try {
+            usuarioService.iniciarSesion(login, password);
+            return true;
+        } catch (Exception e) {
+            Notification.show("Error iniciando sesión: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // =================== REGISTRO ===================
     private void mostrarRegistro() {
         mainLayout.removeAll();
         mainLayout.add(tituloComponent);
@@ -109,38 +137,4 @@ public class LoginView extends Main {
                 Notification.show("Usuario registrado con éxito", 3000, Notification.Position.MIDDLE);
                 mostrarLogin();
             } catch (Exception ex) {
-                Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
-            }
-        });
-
-        VerticalLayout formLayout = new VerticalLayout(passwordInfo, nombreField, loginField, passwordField, enviar);
-        formLayout.getStyle().set("padding", "20px");
-        formLayout.getStyle().set("background-color", "white");
-        formLayout.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)");
-        formLayout.getStyle().set("border-radius", "10px");
-        formLayout.setWidth("350px");
-
-        mainLayout.add(formLayout);
-    }
-
-    public void validaInicioSesion(String username, String password) {
-        if (authenticate(username, password)) {
-            Notification.show("Inicia sesión para " + username);
-            session.setLoginEnSesion(username);
-            UI.getCurrent().navigate("");
-        } else {
-            loginForm.setError(true);
-            Notification.show("Error iniciando sesión", 3000, Notification.Position.MIDDLE);
-        }
-    }
-
-    public boolean authenticate(String login, String password) {
-        try {
-            usuarioService.iniciarSesion(login, password);
-            return true;
-        } catch (Exception e) {
-            Notification.show("Error iniciando sesión:" + e.getMessage());
-            return false;
-        }
-    }
-}
+                Notification.show(ex.getMessage(), 4000, Notif
