@@ -21,14 +21,10 @@ public class GrupoService {
         this.usuarioRepo = usuarioRepo;
     }
 
-    public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
-            throws UsuarioNotFoundException, GrupoExistenteException {
+    public Grupo crearGrupo(String login, String nombre, String descripcion)
+            throws UsuarioNotFoundException {
 
-        if (grupoRepo.findByNombreGrupoIgnoreCase(nombre).isPresent()) {
-            throw new GrupoExistenteException("Ya existe un grupo con ese nombre");
-        }
-
-        Usuario creador = usuarioRepo.findById(loginCreador)
+        Usuario creador = usuarioRepo.findById(login)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
         Grupo grupo = new Grupo();
@@ -36,46 +32,23 @@ public class GrupoService {
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
 
-        // Agregar creador como participante
-        ParticipantesGrupo participanteCreador = new ParticipantesGrupo(creador, grupo);
-        grupo.getParticipantes().add(participanteCreador);
+        // Agrega al creador como participante
+        ParticipantesGrupo pg = new ParticipantesGrupo(creador, grupo);
+        grupo.getParticipantes().add(pg);
 
         return grupoRepo.save(grupo);
     }
 
-    public void unirseAGrupo(String loginUsuario, Long grupoId)
-            throws UsuarioNotFoundException, GrupoNotFoundException, UsuarioAlreadyInGroupException {
+    public List<String> obtenerNombresParticipantes(Long grupoId) {
+        Grupo g = grupoRepo.findById(grupoId).orElseThrow();
 
-        Grupo grupo = grupoRepo.findById(grupoId)
-                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
-
-        Usuario usuario = usuarioRepo.findById(loginUsuario)
-                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
-
-        boolean yaParticipa = grupo.getParticipantes().stream()
-                .anyMatch(p -> p.getUsuario().getLogin().equals(loginUsuario));
-
-        if (yaParticipa) {
-            throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
-        }
-
-        ParticipantesGrupo nuevoParticipante = new ParticipantesGrupo(usuario, grupo);
-        grupo.getParticipantes().add(nuevoParticipante);
-
-        grupoRepo.save(grupo);
-    }
-
-    public List<Grupo> listarTodos() {
-        return grupoRepo.findAll();
-    }
-
-    // ✅ Obtener participantes como lista de Strings (variable básica)
-    public List<String> obtenerNombresParticipantes(Long grupoId) throws GrupoNotFoundException {
-        Grupo grupo = grupoRepo.findById(grupoId)
-                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
-
-        return grupo.getParticipantes().stream()
+        return g.getParticipantes()
+                .stream()
                 .map(p -> p.getUsuario().getLogin())
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    public List<Grupo> listar() {
+        return grupoRepo.findAll();
     }
 }
