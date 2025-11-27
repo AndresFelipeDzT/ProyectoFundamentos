@@ -1,0 +1,20 @@
+{
+  "usuarios" : [ {
+    "login" : "romerocana",
+    "nombre" : "Ana Romero",
+    "password" : "$2a$10$AlLgyjVuER1MphHEo6/OFOdfjeazBZThNWP8aZS0qb8JgRHacKUee",
+    "solicitudesEnviadas" : [ ],
+    "solicitudesRecibidas" : [ ],
+    "gruposCreados" : [ ],
+    "perfil" : null,
+    "publicaciones" : [ ],
+    "comentarios" : [ ]
+  } ],
+  "grupos" : [ {
+    "id" : null,
+    "nombreGrupo" : "Grupo",
+    "descripcion" : "Hola",
+    "participantes" : [ ]
+  } ],
+  "solicitudes" : [ ]
+}

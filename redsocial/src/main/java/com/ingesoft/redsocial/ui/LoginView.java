@@ -68,40 +68,65 @@ public class LoginView extends Main {
         loginForm.addLoginListener(event -> validaInicioSesion(event.getUsername(), event.getPassword()));
     }
 
-    private void mostrarRegistro() {
-        mainLayout.removeAll();
-        mainLayout.add(tituloComponent);
+ private void mostrarRegistro() {
+    mainLayout.removeAll();
 
-        Label infoLogin = new Label("¿Ya tienes una cuenta? Para iniciar sesión:");
-        mainLayout.add(infoLogin);
+    // Layout central para registro
+    VerticalLayout registroLayout = new VerticalLayout();
+    registroLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
+    registroLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+    registroLayout.setWidthFull();
+    registroLayout.setHeightFull();
+    
+    // Añadir título
+    registroLayout.add(tituloComponent);
 
-        Button botonIrLogin = new Button("Iniciar sesión");
-        botonIrLogin.addClickListener(e -> mostrarLogin());
-        mainLayout.add(botonIrLogin);
+    // Texto e botón para volver a login
+    Label infoLogin = new Label("¿Ya tienes una cuenta? Para iniciar sesión:");
+    infoLogin.getStyle().set("font-size", "14px");
+    infoLogin.getStyle().set("color", "#555");
+    Button botonIrLogin = new Button("Iniciar sesión", e -> mostrarLogin());
+    botonIrLogin.getStyle().set("background-color", "#1a73e8");
+    botonIrLogin.getStyle().set("color", "white");
 
-        TextField nombreField = new TextField("Nombre completo");
-        TextField loginField = new TextField("Nombre de usuario");
-        PasswordField passwordField = new PasswordField("Contraseña");
-        Label passwordInfo = new Label("Mínimo 8 caracteres, incluye número y carácter especial");
+    registroLayout.add(infoLogin, botonIrLogin);
 
-        Button enviar = new Button("Registrar");
-        enviar.addClickListener(e -> {
-            try {
-                usuarioService.registrarNuevoUsuario(
-                        loginField.getValue(),
-                        nombreField.getValue(),
-                        passwordField.getValue()
-                );
-                Notification.show("Usuario registrado con éxito");
-                mostrarLogin();
-            } catch (Exception ex) {
-                Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
-            }
-        });
+    // Formulario de registro
+    TextField nombreField = new TextField("Nombre completo");
+    TextField loginField = new TextField("Nombre de usuario");
+    PasswordField passwordField = new PasswordField("Contraseña");
+    Label passwordInfo = new Label("Mínimo 8 caracteres, incluye número y carácter especial");
 
-        VerticalLayout formLayout = new VerticalLayout(passwordInfo, nombreField, loginField, passwordField, enviar);
-        mainLayout.add(formLayout);
-    }
+    Button enviar = new Button("Registrar", e -> {
+        try {
+            usuarioService.registrarNuevoUsuario(
+                loginField.getValue(),
+                nombreField.getValue(),
+                passwordField.getValue()
+            );
+            Notification.show("Usuario registrado con éxito", 3000, Notification.Position.MIDDLE);
+            mostrarLogin();
+        } catch (Exception ex) {
+            Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
+        }
+    });
+    enviar.getStyle().set("background-color", "#1a73e8");
+    enviar.getStyle().set("color", "white");
+    enviar.getStyle().set("width", "100%");
+
+    VerticalLayout formLayout = new VerticalLayout(passwordInfo, nombreField, loginField, passwordField, enviar);
+    formLayout.setWidth("350px");
+    formLayout.getStyle().set("padding", "20px");
+    formLayout.getStyle().set("background-color", "white");
+    formLayout.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)");
+    formLayout.getStyle().set("border-radius", "10px");
+    
+    registroLayout.add(formLayout);
+
+    // Añadir al mainLayout centrado
+    mainLayout.add(registroLayout);
+}
+
 
     private void validaInicioSesion(String username, String password) {
         try {
