@@ -1,5 +1,7 @@
 package com.ingesoft.redsocial.modelo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,10 +17,12 @@ public class ParticipantesGrupo {
     private Long id;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "usuario_login")
     private Usuario usuario;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(name = "grupo_id")
     private Grupo grupo;
 

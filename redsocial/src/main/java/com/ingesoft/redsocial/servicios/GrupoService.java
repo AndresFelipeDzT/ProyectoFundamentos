@@ -1,7 +1,6 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -54,12 +53,9 @@ public class GrupoService {
         return grupoRepo.save(grupo);
     }
 
-    // Unirse a grupo
-    public void unirseAGrupo(String loginUsuario, Long grupoId)
-            throws UsuarioNotFoundException, GrupoNotFoundException, UsuarioAlreadyInGroupException {
-
-        Grupo grupo = grupoRepo.findById(grupoId)
-                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
+    // Método específico para añadir participante desde la vista
+    public void añadirParticipante(Grupo grupo, String loginUsuario)
+            throws UsuarioNotFoundException, UsuarioAlreadyInGroupException {
 
         Usuario usuario = usuarioRepo.findById(loginUsuario)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
@@ -68,7 +64,7 @@ public class GrupoService {
                 .anyMatch(p -> p.getUsuario().getLogin().equals(loginUsuario));
 
         if (yaParticipa) {
-            throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
+            throw new UsuarioAlreadyInGroupException("El usuario ya es miembro de este grupo");
         }
 
         ParticipantesGrupo nuevoParticipante = new ParticipantesGrupo();
@@ -77,6 +73,16 @@ public class GrupoService {
         grupo.getParticipantes().add(nuevoParticipante);
 
         grupoRepo.save(grupo);
+    }
+
+    // Unirse a grupo (opcional, mantiene compatibilidad)
+    public void unirseAGrupo(String loginUsuario, Long grupoId)
+            throws UsuarioNotFoundException, GrupoNotFoundException, UsuarioAlreadyInGroupException {
+
+        Grupo grupo = grupoRepo.findById(grupoId)
+                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
+
+        añadirParticipante(grupo, loginUsuario);
     }
 
     // Listar todos los grupos
