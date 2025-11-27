@@ -1,107 +1,47 @@
-package com.ingesoft.redsocial.ui;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.passwordfield.PasswordField;
 
-import com.ingesoft.redsocial.servicios.UsuarioService;
-import com.ingesoft.redsocial.ui.componentes.TituloComponent;
-import com.ingesoft.redsocial.ui.servicio.SessionService;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.Main;
-import com.vaadin.flow.component.login.LoginForm;
-import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.auth.AnonymousAllowed;
-
-@Route(value = "login", autoLayout = false) 
-@PageTitle("Login")
-@AnonymousAllowed 
 public class LoginView extends Main {
 
-   // == Servicios de la aplicación
+    private final VerticalLayout registroLayout = new VerticalLayout();
 
-    SessionService session;
+    public LoginView(SessionService session, UsuarioService usuarioService, TituloComponent tituloComponent) {
 
-    UsuarioService usuarioService;
+        // ... tu código actual del loginForm ...
 
-    // == Componentes
-    // - Elementos de la pantalla
+        // Botón para mostrar formulario de registro
+        Button botonRegistrar = new Button("Registrar");
+        add(botonRegistrar);
 
-    TituloComponent tituloComponent;
+        botonRegistrar.addClickListener(event -> mostrarFormularioRegistro());
 
-    private final LoginForm loginForm;
-
-    // == Constructor
-    // - Crea la pantalla
-
-    public LoginView(
-        SessionService session,
-        UsuarioService usuarioService,
-        TituloComponent tituloComponent
-    ) {
-
-        this.session = session;
-        this.usuarioService = usuarioService;
-        this.tituloComponent = tituloComponent;
-
-        setSizeFull();
-        getStyle().set("flex-grow", "1");
-
-        add(tituloComponent);
-        
-        // agrega la pantalla de login
-        loginForm = new LoginForm();
-        loginForm.setForgotPasswordButtonVisible(false);
-        add(loginForm);
-
-        // cuando se hace clic en iniciar sesión        
-        loginForm.addLoginListener(event -> 
-            validaInicioSesion(event.getUsername(), event.getPassword())
-        );
-        
+        // agregar layout para registro, inicialmente vacío
+        add(registroLayout);
     }
 
-    // == Controladores 
-    // - obtiene los datos de la solicitud de la pantalla
-    // - invoca a los servicios / la lógica de negocio
-    // - actualiza la pantalla
+    private void mostrarFormularioRegistro() {
+        registroLayout.removeAll(); // limpia si ya hay algo
 
-    public void validaInicioSesion(String username, String password) {
+        // Campos de registro
+        TextField nombre = new TextField("Nombre completo");
+        TextField login = new TextField("Nombre de usuario");
+        PasswordField password = new PasswordField("Contraseña");
 
-        // Hace la autenticación usando los datos de la pantalla
+        // Botón para enviar registro
+        Button enviar = new Button("Registrar");
+        enviar.addClickListener(e -> {
+            try {
+                usuarioService.registrarNuevoUsuario(login.getValue(), nombre.getValue(), password.getValue());
+                Notification.show("Usuario registrado con éxito");
+                registroLayout.removeAll(); // limpiar formulario
+            } catch (Exception ex) {
+                Notification.show("Error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
+            }
+        });
 
-        // si la autenticación sale bien
-        if (authenticate(username, password)) {
-
-            // muestra un mensaje de inicio de sesión
-            Notification.show("Inicia sesión para " + username);
-            // asigna el usuario a la sesión
-            session.setLoginEnSesion(username);
-            // navega hacia la página principal
-            UI.getCurrent().navigate("");
-
-        // si la atenticación fall
-        } else {
-
-            // muestra un mensaje de error
-            loginForm.setError(true);
-            Notification.show("Error iniciando sesión", 3000, Notification.Position.MIDDLE);
-
-        }
+        // Agregar todo al layout de registro
+        registroLayout.add(nombre, login, password, enviar);
     }
-
-    // == Otros Métodos
-    // - para invocar la lógica de negocio más fácil
-
-    // autentica el usuario
-    public boolean authenticate(String login, String password) {
-        try {
-            usuarioService.iniciarSesion(login, password);
-            return true;        
-        } catch (Exception e) {
-            Notification.show("Error iniciando sesión:" + e.getMessage());
-            return false;
-        }
-        // return (login.equals(password));
-    }
-
-
 }

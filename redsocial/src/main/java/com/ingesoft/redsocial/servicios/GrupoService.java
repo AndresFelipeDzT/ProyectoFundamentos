@@ -27,7 +27,7 @@ public class GrupoService {
     @Autowired
     private ParticipantesGrupoRepository participaciones;
 
-    // Crear un grupo
+    // Crear grupo
     public Grupo crearGrupo(String loginCreador, String nombre, String descripcion) 
             throws UsuarioNotFoundException, GrupoExistenteException {
 
@@ -39,13 +39,11 @@ public class GrupoService {
             throw new UsuarioNotFoundException("El usuario creador no existe");
         }
 
-        // Verificar nombre duplicado
         if (grupos.findByNombreGrupo(nombre).isPresent()) {
             throw new GrupoExistenteException(nombre);
         }
 
         Usuario creador = usuarios.findById(loginCreador).get();
-
         Grupo grupo = new Grupo();
         grupo.setNombreGrupo(nombre);
         grupo.setDescripcion(descripcion);
@@ -64,7 +62,7 @@ public class GrupoService {
         return grupos.findByNombreGrupoContainingIgnoreCase(filtro);
     }
 
-    // Unirse a un grupo
+    // Unirse a grupo
     public void unirseAGrupo(String login, Long idGrupo) throws UsuarioNotFoundException {
 
         if (!usuarios.existsById(login)) {
