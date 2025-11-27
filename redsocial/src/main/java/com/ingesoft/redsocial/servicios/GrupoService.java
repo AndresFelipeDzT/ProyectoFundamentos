@@ -38,6 +38,12 @@ public class GrupoService {
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
 
+        // Inicializar lista de participantes y agregar al creador
+        ParticipantesGrupo participanteCreador = new ParticipantesGrupo();
+        participanteCreador.setUsuario(creador);
+        participanteCreador.setGrupo(grupo);
+        grupo.getParticipantes().add(participanteCreador);
+
         data.getGrupos().add(grupo);
         data.guardarCambios();
 
