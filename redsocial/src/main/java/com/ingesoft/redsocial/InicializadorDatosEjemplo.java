@@ -26,6 +26,7 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
         usuarioRepository.save(new Usuario("user2", "Usuario 2", "user2"));
         usuarioRepository.save(new Usuario("user3", "Usuario 3", "user3"));
         usuarioRepository.save(new Usuario("andres", "Andres", "user4"));
+        usuarioRepository.save(new Usuario("roc", "Andres", "12345678*"));
 
     }
 
