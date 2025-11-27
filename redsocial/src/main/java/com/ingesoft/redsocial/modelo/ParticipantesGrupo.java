@@ -1,5 +1,7 @@
 package com.ingesoft.redsocial.modelo;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -12,12 +14,13 @@ public class ParticipantesGrupo {
 
     @Id
     @GeneratedValue
-    Long id;
+    private Long id;
 
     @ManyToOne
-    Usuario usuario;
+    private Usuario usuario;
 
     @ManyToOne
-    Grupo grupo;
+     @JsonBackReference // <-- Evita el loop al serializar Grupo
+    private Grupo grupo;
 }
 

@@ -3,6 +3,8 @@ package com.ingesoft.redsocial.modelo;
 import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -27,5 +29,6 @@ public class Grupo {
     private Usuario creador;
 
     @OneToMany(mappedBy = "grupo", fetch = FetchType.LAZY)
+    @JsonManagedReference
     private List<ParticipantesGrupo> participantes = new ArrayList<>();
 }
