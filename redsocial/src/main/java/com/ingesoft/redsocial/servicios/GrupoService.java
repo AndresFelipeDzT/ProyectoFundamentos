@@ -20,7 +20,7 @@ public class GrupoService {
         this.data = data;
     }
 
-    // Crear grupo
+    // Crear grupo y agregar al creador como participante
     public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
             throws UsuarioNotFoundException, GrupoExistenteException {
 
@@ -39,10 +39,10 @@ public class GrupoService {
         grupo.setCreador(creador);
 
         // Inicializar lista de participantes y agregar al creador
-        ParticipantesGrupo participanteCreador = new ParticipantesGrupo();
-        participanteCreador.setUsuario(creador);
-        participanteCreador.setGrupo(grupo);
-        grupo.getParticipantes().add(participanteCreador);
+        ParticipantesGrupo participante = new ParticipantesGrupo();
+        participante.setUsuario(creador);
+        participante.setGrupo(grupo);
+        grupo.getParticipantes().add(participante);
 
         data.getGrupos().add(grupo);
         data.guardarCambios();
