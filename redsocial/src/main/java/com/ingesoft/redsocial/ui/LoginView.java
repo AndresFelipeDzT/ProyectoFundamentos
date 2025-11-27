@@ -8,6 +8,7 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -20,50 +21,58 @@ import com.vaadin.flow.server.auth.AnonymousAllowed;
 @AnonymousAllowed
 public class LoginView extends Main {
 
-    // == Servicios de la aplicación
+    // Servicios
     private final SessionService session;
     private final UsuarioService usuarioService;
     private final TituloComponent tituloComponent;
 
-    // == Componentes de la pantalla
+    // Componentes
     private final LoginForm loginForm;
     private final VerticalLayout registroLayout = new VerticalLayout();
+    private final VerticalLayout mainLayout = new VerticalLayout();
 
-    // == Constructor
-    public LoginView(
-        SessionService session,
-        UsuarioService usuarioService,
-        TituloComponent tituloComponent
-    ) {
+    public LoginView(SessionService session, UsuarioService usuarioService, TituloComponent tituloComponent) {
         this.session = session;
         this.usuarioService = usuarioService;
         this.tituloComponent = tituloComponent;
 
-        setSizeFull();
-        getStyle().set("flex-grow", "1");
+        // Layout principal centrado
+        mainLayout.setSizeFull();
+        mainLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
+        mainLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        mainLayout.getStyle().set("background-color", "#f0f4f8"); // fondo suave
 
-        // Título de la pantalla
-        add(tituloComponent);
+        // Título
+        tituloComponent.getStyle().set("font-size", "36px");
+        tituloComponent.getStyle().set("color", "#1a73e8");
+        mainLayout.add(tituloComponent);
 
         // LoginForm
         loginForm = new LoginForm();
         loginForm.setForgotPasswordButtonVisible(false);
-        add(loginForm);
+        loginForm.getStyle().set("width", "350px");
+        mainLayout.add(loginForm);
 
         // Botón para mostrar formulario de registro
         Button botonRegistrar = new Button("Registrar");
-        add(botonRegistrar);
-
-        botonRegistrar.addClickListener(event -> mostrarFormularioRegistro());
+        botonRegistrar.getStyle().set("background-color", "#1a73e8");
+        botonRegistrar.getStyle().set("color", "white");
+        botonRegistrar.getStyle().set("margin-top", "10px");
+        mainLayout.add(botonRegistrar);
 
         // Layout para el registro (inicialmente vacío)
-        add(registroLayout);
+        registroLayout.setWidth("350px");
+        mainLayout.add(registroLayout);
 
-        // Listener del login
+        // Listeners
+        botonRegistrar.addClickListener(event -> mostrarFormularioRegistro());
         loginForm.addLoginListener(event -> validaInicioSesion(event.getUsername(), event.getPassword()));
+
+        // Agregamos el layout principal al Main
+        add(mainLayout);
     }
 
-    // == Método para login
+    // === Login
     private void validaInicioSesion(String username, String password) {
         if (authenticate(username, password)) {
             Notification.show("Inicio de sesión correcto para " + username);
@@ -85,7 +94,7 @@ public class LoginView extends Main {
         }
     }
 
-    // == Método para mostrar el formulario de registro
+    // === Registro
     private void mostrarFormularioRegistro() {
         registroLayout.removeAll(); // limpiar si ya hay algo
 
@@ -94,6 +103,11 @@ public class LoginView extends Main {
         PasswordField passwordField = new PasswordField("Contraseña");
 
         Button enviar = new Button("Registrar");
+        enviar.getStyle().set("background-color", "#1a73e8");
+        enviar.getStyle().set("color", "white");
+        enviar.getStyle().set("width", "100%");
+        enviar.getStyle().set("border-radius", "5px");
+
         enviar.addClickListener(e -> {
             try {
                 usuarioService.registrarNuevoUsuario(
@@ -102,12 +116,18 @@ public class LoginView extends Main {
                     passwordField.getValue()
                 );
                 Notification.show("Usuario registrado con éxito");
-                registroLayout.removeAll(); // limpiar formulario
+                registroLayout.removeAll();
             } catch (Exception ex) {
                 Notification.show("Error: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
             }
         });
 
-        registroLayout.add(nombreField, loginField, passwordField, enviar);
+        VerticalLayout formLayout = new VerticalLayout(nombreField, loginField, passwordField, enviar);
+        formLayout.getStyle().set("padding", "20px");
+        formLayout.getStyle().set("background-color", "white");
+        formLayout.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)");
+        formLayout.getStyle().set("border-radius", "10px");
+
+        registroLayout.add(formLayout);
     }
 }
