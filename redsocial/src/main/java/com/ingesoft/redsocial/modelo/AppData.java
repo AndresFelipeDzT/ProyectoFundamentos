@@ -1,15 +1,74 @@
 package com.ingesoft.redsocial.modelo;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Data;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-@Data
 public class AppData {
+
     private List<Usuario> usuarios = new ArrayList<>();
     private List<Grupo> grupos = new ArrayList<>();
-    private List<ParticipantesGrupo> participantes = new ArrayList<>();
-    private List<SolicitudAmistad> solicitudesAmistad = new ArrayList<>();
-    // Puedes agregar publicaciones, comentarios, etc.
+    private List<SolicitudAmistad> solicitudes = new ArrayList<>();
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final File archivo = new File("appdata.json"); // archivo JSON global
+
+    public AppData() {
+        cargarDatos();
+    }
+
+    // ===============================
+    // GETTERS
+    // ===============================
+    public List<Usuario> getUsuarios() {
+        return usuarios;
+    }
+
+    public List<Grupo> getGrupos() {
+        return grupos;
+    }
+
+    public List<SolicitudAmistad> getSolicitudes() {
+        return solicitudes;
+    }
+
+    // Obtener participantes de un grupo
+    public List<ParticipantesGrupo> getParticipantes(Long grupoId) {
+        for (Grupo g : grupos) {
+            if (g.getId().equals(grupoId)) {
+                return g.getParticipantes();
+            }
+        }
+        return new ArrayList<>();
+    }
+
+    // ===============================
+    // Cargar datos desde JSON
+    // ===============================
+    private void cargarDatos() {
+        try {
+            if (archivo.exists()) {
+                AppData data = mapper.readValue(archivo, AppData.class);
+                this.usuarios = data.getUsuarios();
+                this.grupos = data.getGrupos();
+                this.solicitudes = data.getSolicitudes();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ===============================
+    // Guardar cambios en JSON
+    // ===============================
+    public void guardarCambios() {
+        try {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(archivo, this);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
