@@ -8,6 +8,7 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -58,7 +59,7 @@ public class LoginView extends Main {
         loginForm.getStyle().set("width", "350px");
         mainLayout.add(loginForm);
 
-        Label infoRegistro = new Label("¿Todavía no tienes una cuenta? Para registrar:");
+        Label infoRegistro = new Label("¿Todavía no tienes una cuenta?");
         mainLayout.add(infoRegistro);
 
         Button botonIrRegistro = new Button("Registrar");
@@ -82,7 +83,7 @@ public class LoginView extends Main {
     registroLayout.add(tituloComponent);
 
     // Texto e botón para volver a login
-    Label infoLogin = new Label("¿Ya tienes una cuenta? Para iniciar sesión:");
+    Label infoLogin = new Label("¿Ya tienes una cuenta?");
     infoLogin.getStyle().set("font-size", "14px");
     infoLogin.getStyle().set("color", "#555");
     Button botonIrLogin = new Button("Iniciar sesión", e -> mostrarLogin());
@@ -95,7 +96,12 @@ public class LoginView extends Main {
     TextField nombreField = new TextField("Nombre completo");
     TextField loginField = new TextField("Nombre de usuario");
     PasswordField passwordField = new PasswordField("Contraseña");
-    Label passwordInfo = new Label("Mínimo 8 caracteres, incluye número y carácter especial");
+    
+   // Texto discreto sobre la contraseña
+    Span passwordHint = new Span("Mínimo 8 caracteres, incluye número y carácter especial");
+    passwordHint.getStyle().set("font-size", "11px");
+    passwordHint.getStyle().set("color", "gray");
+    passwordHint.getStyle().set("margin-bottom", "2px");
 
     Button enviar = new Button("Registrar", e -> {
         try {
