@@ -1,5 +1,11 @@
 package com.ingesoft.redsocial.ui;
 
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+// Nueva importación para centrar la tabla
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout; 
+
 import com.ingesoft.redsocial.modelo.Grupo;
 import com.ingesoft.redsocial.servicios.GrupoService;
 import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
@@ -33,19 +39,45 @@ public class GruposView extends VerticalLayout {
 
         UI.getCurrent().access(this::validarSesion);
 
+        // ********** MODIFICACIONES DE ESTILO **********
+        
+        // 1. Aplicar gama de colores azul de fondo
+        setSizeFull();
+        getStyle().set("background-color", "#E6F7FF"); // Azul claro
+        setAlignItems(Alignment.CENTER); // Centrar el contenido horizontalmente (campos, botón)
+        
         add(nav);
 
         nombreGrupo = new TextField("Nombre del grupo");
+        nombreGrupo.setWidth("300px"); 
         descripcion = new TextField("Descripción");
+        descripcion.setWidth("300px");
 
-        crearGrupo = new Button("Crear Grupo", e -> crear());
-
+        // Botón Crear Grupo
+        crearGrupo = new Button("Crear Grupo", VaadinIcon.PLUS_CIRCLE.create(), e -> crear());
+        crearGrupo.addThemeVariants(
+            ButtonVariant.LUMO_PRIMARY,
+            ButtonVariant.LUMO_LARGE
+        );
+        crearGrupo.getStyle().set("border-radius", "10px");
+        crearGrupo.setWidth("300px");
+        
         tabla = new Grid<>(Grupo.class);
         tabla.removeAllColumns();
         tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
+        // tabla.setWidth("70%"); // Eliminamos esta línea para usar el layout de centrado
 
-        add(nombreGrupo, descripcion, crearGrupo, tabla);
+        // 2. Centrar la Tabla dentro de un HorizontalLayout
+        HorizontalLayout tablaContainer = new HorizontalLayout(tabla);
+        tablaContainer.setWidth("80%"); // Define el ancho del contenedor de la tabla (ajusta si es necesario)
+        tablaContainer.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.CENTER); // Centra la tabla dentro de este contenedor
+        tabla.setWidthFull(); // Hace que la tabla ocupe todo el ancho de su contenedor (tablaContainer)
 
+        // 3. Añadir todos los componentes a la vista
+        add(nombreGrupo, descripcion, crearGrupo, tablaContainer);
+
+        // ********** FIN DE MODIFICACIONES DE ESTILO **********
+        
         cargar();
     }
 
@@ -77,4 +109,3 @@ public class GruposView extends VerticalLayout {
         }
     }
 }
-
