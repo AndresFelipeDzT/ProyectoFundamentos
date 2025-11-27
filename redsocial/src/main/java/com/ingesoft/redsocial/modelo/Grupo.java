@@ -65,7 +65,7 @@ public class Grupo {
         this.participantes = participantes;
     }
 
-    // Método nuevo que devuelve solo usuarios
+    // Devuelve solo la lista de usuarios para evitar problemas de lazy loading
     public List<Usuario> getUsuariosParticipantes() {
         List<Usuario> usuarios = new ArrayList<>();
         for (ParticipantesGrupo p : participantes) {

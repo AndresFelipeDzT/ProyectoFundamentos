@@ -63,10 +63,9 @@ public class GruposView extends VerticalLayout {
             Button añadir = new Button("Añadir participante", VaadinIcon.USERS.create());
             añadir.addThemeVariants(ButtonVariant.LUMO_CONTRAST);
             añadir.addClickListener(e -> {
-                // Por simplicidad, agregamos un participante de ejemplo
-                String participanteEjemplo = "Nuevo participante"; // Aquí puedes reemplazar por un diálogo real
                 try {
-                    grupoService.añadirParticipante(grupo, participanteEjemplo);
+                    // Por simplicidad agregamos el login de sesión actual
+                    grupoService.añadirParticipante(grupo, session.getLoginEnSesion());
                     Notification.show("Participante añadido a " + grupo.getNombreGrupo());
                 } catch (Exception ex) {
                     Notification.show("Error: " + ex.getMessage());

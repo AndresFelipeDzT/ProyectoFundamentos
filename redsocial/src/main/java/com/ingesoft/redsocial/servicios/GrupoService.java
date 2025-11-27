@@ -53,7 +53,7 @@ public class GrupoService {
         return grupoRepo.save(grupo);
     }
 
-    // Método específico para añadir participante desde la vista
+    // Añadir participante a un grupo (desde UI)
     public void añadirParticipante(Grupo grupo, String loginUsuario)
             throws UsuarioNotFoundException, UsuarioAlreadyInGroupException {
 
@@ -73,16 +73,6 @@ public class GrupoService {
         grupo.getParticipantes().add(nuevoParticipante);
 
         grupoRepo.save(grupo);
-    }
-
-    // Unirse a grupo (opcional, mantiene compatibilidad)
-    public void unirseAGrupo(String loginUsuario, Long grupoId)
-            throws UsuarioNotFoundException, GrupoNotFoundException, UsuarioAlreadyInGroupException {
-
-        Grupo grupo = grupoRepo.findById(grupoId)
-                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
-
-        añadirParticipante(grupo, loginUsuario);
     }
 
     // Listar todos los grupos
