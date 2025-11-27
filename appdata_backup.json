@@ -2,7 +2,7 @@
   "usuarios" : [ {
     "login" : "romerocana",
     "nombre" : "Ana Romero",
-    "password" : "$2a$10$/J4LvWhTA1BdDsnXwtUi5eLlKpJkTvaG/8UN0yLSW8AxQPKfiUMRG",
+    "password" : "$2a$10$1dmPIb821v2H561jNo8Wjesg63HAQsCOn64Bd6qAJSnsMgb1o0GXK",
     "solicitudesEnviadas" : [ ],
     "solicitudesRecibidas" : [ ],
     "gruposCreados" : [ ],
@@ -11,15 +11,15 @@
     "comentarios" : [ ]
   } ],
   "grupos" : [ {
-    "id" : null,
-    "nombreGrupo" : "Grupo",
-    "descripcion" : "amigos",
+    "id" : 1764219312002,
+    "nombreGrupo" : "Hola",
+    "descripcion" : "amigo",
     "participantes" : [ {
       "id" : null,
       "usuario" : {
         "login" : "romerocana",
         "nombre" : "Ana Romero",
-        "password" : "$2a$10$/J4LvWhTA1BdDsnXwtUi5eLlKpJkTvaG/8UN0yLSW8AxQPKfiUMRG",
+        "password" : "$2a$10$1dmPIb821v2H561jNo8Wjesg63HAQsCOn64Bd6qAJSnsMgb1o0GXK",
         "solicitudesEnviadas" : [ ],
         "solicitudesRecibidas" : [ ],
         "gruposCreados" : [ ],

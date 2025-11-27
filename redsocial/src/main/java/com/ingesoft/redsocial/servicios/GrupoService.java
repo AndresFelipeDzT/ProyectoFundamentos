@@ -1,6 +1,7 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.util.List;
+import java.util.Random;
 
 import org.springframework.stereotype.Service;
 
@@ -34,7 +35,7 @@ public class GrupoService {
         }
 
         Grupo grupo = new Grupo();
-        grupo.setId(System.currentTimeMillis()); // ID único temporal para JSON
+        grupo.setId(System.currentTimeMillis() + new Random().nextInt(1000)); // ID único temporal
         grupo.setNombreGrupo(nombre);
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
@@ -46,7 +47,7 @@ public class GrupoService {
         grupo.getParticipantes().add(participante);
 
         data.getGrupos().add(grupo);
-        data.guardarCambios();
+        data.guardarCambios(); // guarda la lista completa en JSON
 
         return grupo;
     }

@@ -19,15 +19,15 @@ import com.vaadin.flow.router.Route;
 @Route("grupos")
 public class GruposView extends VerticalLayout {
 
-    SessionService session;
-    NavegacionComponent nav;
-    GrupoService grupoService;
+    private final SessionService session;
+    private final NavegacionComponent nav;
+    private final GrupoService grupoService;
 
-    TextField nombreGrupo;
-    TextField descripcion;
-    Button crearGrupo;
+    private final TextField nombreGrupo;
+    private final TextField descripcion;
+    private final Button crearGrupo;
 
-    Grid<Grupo> tabla;
+    private final Grid<Grupo> tabla;
 
     public GruposView(SessionService session, NavegacionComponent nav, GrupoService grupoService) {
 
@@ -65,7 +65,7 @@ public class GruposView extends VerticalLayout {
                 try {
                     grupoService.unirseAGrupo(session.getLoginEnSesion(), g.getId());
                     Notification.show("Te uniste al grupo '" + g.getNombreGrupo() + "'", 3000, Notification.Position.MIDDLE);
-                    tabla.getDataProvider().refreshItem(g);
+                    tabla.setItems(grupoService.listarTodos()); // recarga completa
                 } catch (Exception ex) {
                     Notification.show(ex.getMessage(), 3000, Notification.Position.MIDDLE);
                 }
@@ -97,8 +97,8 @@ public class GruposView extends VerticalLayout {
             nombreGrupo.clear();
             descripcion.clear();
 
-            cargar();
-            tabla.getDataProvider().refreshAll();
+            // Recarga tabla con los grupos actuales desde JSON
+            tabla.setItems(grupoService.listarTodos());
         } catch (Exception ex) {
             Notification.show("No fue posible crear el grupo: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
         }
