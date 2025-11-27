@@ -13,15 +13,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class AppData {
 
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final File usuariosFile = new File("usuarios.json");
-    private final File gruposFile = new File("grupos.json");
-
     private List<Usuario> usuarios = new ArrayList<>();
     private List<Grupo> grupos = new ArrayList<>();
 
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final File archivoGrupos = new File("grupos.json");
+    private final File archivoUsuarios = new File("usuarios.json");
+
     public AppData() {
-        cargar();
+        cargarDatos();
     }
 
     public List<Usuario> getUsuarios() {
@@ -32,25 +32,42 @@ public class AppData {
         return grupos;
     }
 
+    /**
+     * Guardar cambios en JSON
+     */
     public void guardarCambios() {
         try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(usuariosFile, usuarios);
-            mapper.writerWithDefaultPrettyPrinter().writeValue(gruposFile, grupos);
+            mapper.writerWithDefaultPrettyPrinter().writeValue(archivoGrupos, grupos);
+            mapper.writerWithDefaultPrettyPrinter().writeValue(archivoUsuarios, usuarios);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void cargar() {
+    /**
+     * Cargar datos desde archivos JSON
+     */
+    private void cargarDatos() {
         try {
-            if (usuariosFile.exists()) {
-                usuarios = mapper.readValue(usuariosFile, new TypeReference<List<Usuario>>() {});
+            if (archivoGrupos.exists()) {
+                grupos = mapper.readValue(archivoGrupos, new TypeReference<List<Grupo>>() {});
             }
-            if (gruposFile.exists()) {
-                grupos = mapper.readValue(gruposFile, new TypeReference<List<Grupo>>() {});
+            if (archivoUsuarios.exists()) {
+                usuarios = mapper.readValue(archivoUsuarios, new TypeReference<List<Usuario>>() {});
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Obtener participantes de un grupo por ID
+     */
+    public List<ParticipantesGrupo> getParticipantes(Long grupoId) {
+        return grupos.stream()
+                .filter(g -> g.getId().equals(grupoId))
+                .findFirst()
+                .map(Grupo::getParticipantes)
+                .orElse(List.of());
     }
 }

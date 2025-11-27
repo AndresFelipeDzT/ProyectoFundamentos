@@ -26,11 +26,9 @@ public class GruposView extends VerticalLayout {
     private final TextField nombreGrupo;
     private final TextField descripcion;
     private final Button crearGrupo;
-
     private final Grid<Grupo> tabla;
 
     public GruposView(SessionService session, NavegacionComponent nav, GrupoService grupoService) {
-
         this.session = session;
         this.nav = nav;
         this.grupoService = grupoService;
@@ -45,6 +43,7 @@ public class GruposView extends VerticalLayout {
 
         nombreGrupo = new TextField("Nombre del grupo");
         nombreGrupo.setWidth("300px");
+
         descripcion = new TextField("Descripción");
         descripcion.setWidth("300px");
 
@@ -58,14 +57,14 @@ public class GruposView extends VerticalLayout {
         tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
         tabla.addColumn(g -> g.getParticipantes().size()).setHeader("Miembros");
 
-        // Botón Unirse dentro de la tabla
+        // Botón "Unirse" dentro de la tabla
         tabla.addComponentColumn(g -> {
             Button unirse = new Button("Unirse");
             unirse.addClickListener(e -> {
                 try {
                     grupoService.unirseAGrupo(session.getLoginEnSesion(), g.getId());
                     Notification.show("Te uniste al grupo '" + g.getNombreGrupo() + "'", 3000, Notification.Position.MIDDLE);
-                    tabla.setItems(grupoService.listarTodos()); // recarga completa
+                    tabla.setItems(grupoService.listarTodos()); // recarga desde JSON
                 } catch (Exception ex) {
                     Notification.show(ex.getMessage(), 3000, Notification.Position.MIDDLE);
                 }
@@ -97,8 +96,7 @@ public class GruposView extends VerticalLayout {
             nombreGrupo.clear();
             descripcion.clear();
 
-            // Recarga tabla con los grupos actuales desde JSON
-            tabla.setItems(grupoService.listarTodos());
+            tabla.setItems(grupoService.listarTodos()); // recarga grupos desde JSON
         } catch (Exception ex) {
             Notification.show("No fue posible crear el grupo: " + ex.getMessage(), 3000, Notification.Position.MIDDLE);
         }
