@@ -9,13 +9,13 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.PasswordField;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.textfield.PasswordField;
-import com.vaadin.flow.component.textfield.TextField;
 
 @Route(value = "login", autoLayout = false)
 @PageTitle("Login / Registro")
@@ -38,7 +38,10 @@ public class LoginView extends Main {
         mainLayout.setSizeFull();
         mainLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
         mainLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        mainLayout.getStyle().set("background-color", "#E6F7FF"); // azul claro opcional
+        mainLayout.getStyle().set("background-image", "url('images/red-network-bg.jpg')");
+        mainLayout.getStyle().set("background-size", "cover");
+        mainLayout.getStyle().set("background-position", "center");
+        mainLayout.getStyle().set("background-repeat", "no-repeat");
 
         // Título
         tituloComponent.getStyle().set("font-size", "36px");
@@ -47,6 +50,7 @@ public class LoginView extends Main {
 
         // Mostrar login al inicio
         mostrarLogin();
+
         add(mainLayout);
     }
 
@@ -54,6 +58,10 @@ public class LoginView extends Main {
     private void mostrarLogin() {
         mainLayout.removeAll();
         mainLayout.add(tituloComponent);
+
+        loginForm.setForgotPasswordButtonVisible(false);
+        loginForm.getStyle().set("width", "350px");
+        mainLayout.add(loginForm);
 
         Label infoRegistro = new Label("¿Todavía no tienes una cuenta? Para registrar:");
         infoRegistro.getStyle().set("font-size", "14px");
@@ -67,9 +75,6 @@ public class LoginView extends Main {
         mainLayout.add(botonIrRegistro);
 
         botonIrRegistro.addClickListener(e -> mostrarRegistro());
-
-        loginForm.setForgotPasswordButtonVisible(false);
-        mainLayout.add(loginForm);
 
         loginForm.addLoginListener(event -> validaInicioSesion(event.getUsername(), event.getPassword()));
     }
@@ -113,6 +118,7 @@ public class LoginView extends Main {
 
         botonIrLogin.addClickListener(e -> mostrarLogin());
 
+        // Formulario de registro
         TextField nombreField = new TextField("Nombre completo");
         TextField loginField = new TextField("Nombre de usuario");
         PasswordField passwordField = new PasswordField("Contraseña");
@@ -137,4 +143,17 @@ public class LoginView extends Main {
                 Notification.show("Usuario registrado con éxito", 3000, Notification.Position.MIDDLE);
                 mostrarLogin();
             } catch (Exception ex) {
-                Notification.show(ex.getMessage(), 4000, Notif
+                Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
+        });
+
+        VerticalLayout formLayout = new VerticalLayout(passwordInfo, nombreField, loginField, passwordField, enviar);
+        formLayout.getStyle().set("padding", "20px");
+        formLayout.getStyle().set("background-color", "white");
+        formLayout.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)");
+        formLayout.getStyle().set("border-radius", "10px");
+        formLayout.setWidth("350px");
+
+        mainLayout.add(formLayout);
+    }
+}
