@@ -3,88 +3,68 @@ package com.ingesoft.redsocial.servicios;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ingesoft.redsocial.excepciones.GrupoExistenteException;
-import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
-import com.ingesoft.redsocial.modelo.AppData;
+import com.ingesoft.redsocial.excepciones.GrupoNotFoundException;
+import com.ingesoft.redsocial.excepciones.UsuarioAlreadyInGroupException;
 import com.ingesoft.redsocial.modelo.Grupo;
-import com.ingesoft.redsocial.modelo.ParticipantesGrupo;
 import com.ingesoft.redsocial.modelo.Usuario;
+import com.ingesoft.redsocial.repositorios.GrupoRepository;
+import com.ingesoft.redsocial.repositorios.UsuarioRepository;
 
 @Service
+@Transactional
 public class GrupoService {
 
-    private final AppData data;
+    private final GrupoRepository grupoRepo;
+    private final UsuarioRepository usuarioRepo;
 
-    public GrupoService(AppData data) {
-        this.data = data;
+    public GrupoService(GrupoRepository grupoRepo, UsuarioRepository usuarioRepo) {
+        this.grupoRepo = grupoRepo;
+        this.usuarioRepo = usuarioRepo;
     }
 
-    // Crear grupo y agregar al creador como participante
-    public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
-            throws UsuarioNotFoundException, GrupoExistenteException {
+    // Crear grupo
+    public Grupo crearGrupo(String loginCreador, String nombreGrupo, String descripcion)
+            throws GrupoExistenteException {
 
-        Usuario creador = data.getUsuarios().stream()
-                .filter(u -> u.getLogin().equals(loginCreador))
-                .findFirst()
-                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
-
-        if (data.getGrupos().stream().anyMatch(g -> g.getNombreGrupo().equalsIgnoreCase(nombre))) {
+        if (grupoRepo.findByNombreGrupo(nombreGrupo).isPresent()) {
             throw new GrupoExistenteException("Ya existe un grupo con ese nombre");
         }
 
+        Usuario creador = usuarioRepo.findById(loginCreador)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
         Grupo grupo = new Grupo();
-        grupo.setId(System.currentTimeMillis()); // ID único
-        grupo.setNombreGrupo(nombre);
+        grupo.setNombreGrupo(nombreGrupo);
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
+        grupo.getParticipantes().add(creador);
 
-        // Agregar al creador como participante
-        ParticipantesGrupo participante = new ParticipantesGrupo();
-        participante.setUsuario(creador);
-        participante.setGrupo(grupo);
-        grupo.getParticipantes().add(participante);
-
-        data.getGrupos().add(grupo);
-        data.guardarCambios();
-
-        return grupo;
-    }
-
-    // Unirse a grupo
-    public void unirseAGrupo(String login, Long idGrupo) throws UsuarioNotFoundException {
-        Usuario usuario = data.getUsuarios().stream()
-                .filter(u -> u.getLogin().equals(login))
-                .findFirst()
-                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
-
-        Grupo grupo = data.getGrupos().stream()
-                .filter(g -> g.getId().equals(idGrupo))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Grupo no encontrado"));
-
-        boolean yaParticipa = grupo.getParticipantes().stream()
-                .anyMatch(p -> p.getUsuario().getLogin().equals(login));
-
-        if (yaParticipa) {
-            throw new RuntimeException("El usuario ya pertenece al grupo");
-        }
-
-        ParticipantesGrupo participante = new ParticipantesGrupo();
-        participante.setUsuario(usuario);
-        participante.setGrupo(grupo);
-        grupo.getParticipantes().add(participante);
-
-        data.guardarCambios();
+        return grupoRepo.save(grupo);
     }
 
     // Listar todos los grupos
     public List<Grupo> listarTodos() {
-        return data.getGrupos();
+        return grupoRepo.findAll();
     }
 
-    // Obtener participantes de un grupo
-    public List<ParticipantesGrupo> obtenerParticipantes(Long grupoId) {
-        return data.getParticipantes(grupoId);
+    // Unirse a grupo
+    public void unirseAGrupo(String loginUsuario, Long grupoId)
+            throws GrupoNotFoundException, UsuarioAlreadyInGroupException {
+
+        Grupo grupo = grupoRepo.findById(grupoId)
+                .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
+
+        Usuario usuario = usuarioRepo.findById(loginUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (grupo.getParticipantes().contains(usuario)) {
+            throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
+        }
+
+        grupo.getParticipantes().add(usuario);
+        grupoRepo.save(grupo);
     }
 }

@@ -2,15 +2,8 @@ package com.ingesoft.redsocial.modelo;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -18,17 +11,29 @@ import lombok.Data;
 public class Grupo {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String nombreGrupo;
     private String descripcion;
 
     @ManyToOne
-    @JsonIgnore
     private Usuario creador;
 
-    @OneToMany(mappedBy = "grupo", fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<ParticipantesGrupo> participantes = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(
+        name = "grupo_participantes",
+        joinColumns = @JoinColumn(name = "grupo_id"),
+        inverseJoinColumns = @JoinColumn(name = "usuario_login")
+    )
+    private List<Usuario> participantes = new ArrayList<>();
+
+    public Grupo() {}
+
+    public Grupo(String nombreGrupo, String descripcion, Usuario creador) {
+        this.nombreGrupo = nombreGrupo;
+        this.descripcion = descripcion;
+        this.creador = creador;
+        this.participantes.add(creador); // El creador se agrega automáticamente
+    }
 }

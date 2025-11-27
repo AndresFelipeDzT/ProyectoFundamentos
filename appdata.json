@@ -1,0 +1,32 @@
+{
+  "usuarios" : [ {
+    "login" : "romerocana",
+    "nombre" : "Ana Romero",
+    "password" : "$2a$10$2mF1Lw3fpiLlyDZXESmxxO82hLe7pPbMxn8.6omt3tPIJ2gFSOvWC",
+    "solicitudesEnviadas" : [ ],
+    "solicitudesRecibidas" : [ ],
+    "gruposCreados" : [ ],
+    "perfil" : null,
+    "publicaciones" : [ ],
+    "comentarios" : [ ]
+  } ],
+  "grupos" : [ {
+    "id" : 1764221545567,
+    "nombreGrupo" : "grupos",
+    "descripcion" : "",
+    "participantes" : [ {
+      "id" : null,
+      "usuario" : {
+        "login" : "romerocana",
+        "nombre" : "Ana Romero",
+        "password" : "$2a$10$2mF1Lw3fpiLlyDZXESmxxO82hLe7pPbMxn8.6omt3tPIJ2gFSOvWC",
+        "solicitudesEnviadas" : [ ],
+        "solicitudesRecibidas" : [ ],
+        "gruposCreados" : [ ],
+        "perfil" : null,
+        "publicaciones" : [ ],
+        "comentarios" : [ ]
+      }
+    } ]
+  } ]
+}

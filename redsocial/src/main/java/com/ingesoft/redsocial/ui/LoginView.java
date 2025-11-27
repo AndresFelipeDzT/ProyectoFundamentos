@@ -35,7 +35,6 @@ public class LoginView extends Main {
         this.usuarioService = usuarioService;
         this.tituloComponent = tituloComponent;
 
-        // Layout principal centrado
         mainLayout.setSizeFull();
         mainLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
         mainLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
@@ -44,18 +43,14 @@ public class LoginView extends Main {
         mainLayout.getStyle().set("background-position", "center");
         mainLayout.getStyle().set("background-repeat", "no-repeat");
 
-        // Título
         tituloComponent.getStyle().set("font-size", "36px");
         tituloComponent.getStyle().set("color", "#1a73e8");
         mainLayout.add(tituloComponent);
 
-        // Mostrar login inicialmente
         mostrarLogin();
-
         add(mainLayout);
     }
 
-    // =================== LOGIN ===================
     private void mostrarLogin() {
         mainLayout.removeAll();
         mainLayout.add(tituloComponent);
@@ -85,7 +80,7 @@ public class LoginView extends Main {
         if (authenticate(username, password)) {
             Notification.show("Inicio de sesión correcto para " + username);
             session.setLoginEnSesion(username);
-            UI.getCurrent().navigate(""); // página principal
+            UI.getCurrent().navigate("");
         } else {
             loginForm.setError(true);
             Notification.show("Error iniciando sesión", 3000, Notification.Position.MIDDLE);
@@ -102,7 +97,6 @@ public class LoginView extends Main {
         }
     }
 
-    // =================== REGISTRO ===================
     private void mostrarRegistro() {
         mainLayout.removeAll();
         mainLayout.add(tituloComponent);
@@ -121,12 +115,9 @@ public class LoginView extends Main {
 
         botonIrLogin.addClickListener(e -> mostrarLogin());
 
-        // Formulario de registro
         TextField nombreField = new TextField("Nombre completo");
         TextField loginField = new TextField("Nombre de usuario");
         PasswordField passwordField = new PasswordField("Contraseña");
-
-        // Texto discreto encima de la contraseña
         Span passwordHint = new Span("Mínimo 8 caracteres, incluye número y carácter especial");
         passwordHint.getStyle().set("font-size", "11px");
         passwordHint.getStyle().set("color", "gray");
@@ -154,7 +145,7 @@ public class LoginView extends Main {
         VerticalLayout formLayout = new VerticalLayout(
             nombreField,
             loginField,
-            passwordHint, // hint sobre contraseña
+            passwordHint,
             passwordField,
             enviar
         );
