@@ -23,30 +23,24 @@ public class UsuarioService {
     UsuarioRepository usuarios;
 
     // CU01 - Registrar nuevo usuario
-    public void registrarNuevoUsuario(
-        String login,
-        String nombre,
-        String password
-    ) throws DuplicateUsuarioException, InvalidPasswordException {
-
-        // 2. Sistema verifica que no exista otro usuario con ese login
-        if (usuarios.existsById(login)) {
-            throw new DuplicateUsuarioException("Ya existe otro usuario con ese login");
-        }
-
-        // 5. Sistema valida que el password tenga más de 5 letras
-        if (password == null || password.length() <= 5) {
-            throw new InvalidPasswordException("La contraseña no cumple con la política de la red social");
-        }
-
-        // 6. Sistema crea el nuevo usuario 
-        Usuario usuario = new Usuario();
-        usuario.setLogin(login);
-        usuario.setNombre(nombre);
-        usuario.setPassword(password);
-        usuarios.save(usuario);
-
+public void registrarNuevoUsuario(String login, String nombre, String password) throws DuplicateUsuarioException, InvalidPasswordException {
+    if (usuarios.existsById(login)) {
+        throw new DuplicateUsuarioException("Ya existe otro usuario con ese login");
     }
+
+    // Validación de contraseña profesional
+    if (password == null || !password.matches("^(?=.*[0-9])(?=.*[!@#$%^&*])(?=\\S+$).{8,}$")) {
+        throw new InvalidPasswordException(
+            "La contraseña debe tener al menos 8 caracteres, incluir un número y un carácter especial"
+        );
+    }
+
+    Usuario usuario = new Usuario();
+    usuario.setLogin(login);
+    usuario.setNombre(nombre);
+    usuario.setPassword(password); // ideal: cifrar aquí
+    usuarios.save(usuario);
+}
 
 
     // CU02 - Iniciar sesión

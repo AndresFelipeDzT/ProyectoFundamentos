@@ -4,109 +4,143 @@ import com.ingesoft.redsocial.servicios.UsuarioService;
 import com.ingesoft.redsocial.ui.componentes.TituloComponent;
 import com.ingesoft.redsocial.ui.servicio.SessionService;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.html.Main;
 import com.vaadin.flow.component.login.LoginForm;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.textfield.PasswordField;
+import com.vaadin.flow.component.textfield.TextField;
 
-@Route(value = "login", autoLayout = false) 
-@PageTitle("Login")
-@AnonymousAllowed 
+@Route(value = "login", autoLayout = false)
+@PageTitle("Login / Registro")
+@AnonymousAllowed
 public class LoginView extends Main {
 
-   // == Servicios de la aplicación
-
     SessionService session;
-
     UsuarioService usuarioService;
-
-    // == Componentes
-    // - Elementos de la pantalla
-
     TituloComponent tituloComponent;
 
-    private final LoginForm loginForm;
+    private final VerticalLayout mainLayout = new VerticalLayout();
+    private final LoginForm loginForm = new LoginForm();
+    private final VerticalLayout registroLayout = new VerticalLayout();
 
-    // == Constructor
-    // - Crea la pantalla
-
-    public LoginView(
-        SessionService session,
-        UsuarioService usuarioService,
-        TituloComponent tituloComponent
-    ) {
-
+    public LoginView(SessionService session, UsuarioService usuarioService, TituloComponent tituloComponent) {
         this.session = session;
         this.usuarioService = usuarioService;
         this.tituloComponent = tituloComponent;
 
-        setSizeFull();
-        getStyle().set("flex-grow", "1");
+        // Layout principal
+        mainLayout.setSizeFull();
+        mainLayout.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
+        mainLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        mainLayout.getStyle().set("background-color", "#E6F7FF"); // azul claro opcional
 
-        // ********** INICIO DE MODIFICACIÓN **********
-
-        // 1. Centrar el contenido horizontal y verticalmente
-        getStyle().set("display", "flex");
-        getStyle().set("flex-direction", "column"); // Organiza el contenido en columna
-        getStyle().set("align-items", "center"); // Centra horizontalmente
-        getStyle().set("justify-content", "center"); // Centra verticalmente
-
-        // 2. Aplicar gama de colores azul
-        // Fondo azul claro (puedes cambiar el color hexadecimal)
-        getStyle().set("background-color", "#E6F7FF"); // Azul claro
-        
-
-        tituloComponent.setWidthFull(); // Opcional, pero ayuda a que el centrado de texto sea visible.
-        tituloComponent.getStyle().set("text-align", "center");
-        // ********** FIN DE MODIFICACIÓN **********
-
-
-        add(tituloComponent);
-        
-        // agrega la pantalla de login
-        loginForm = new LoginForm();
-        loginForm.setForgotPasswordButtonVisible(false);
-        add(loginForm);
-
-        // cuando se hace clic en iniciar sesión        
-        loginForm.addLoginListener(event -> 
-            validaInicioSesion(event.getUsername(), event.getPassword())
-        );
-        
+        mostrarLogin();
+        add(mainLayout);
     }
-    
-    // ... el resto del código (validaInicioSesion y authenticate) permanece igual ...
+
+    private void mostrarLogin() {
+        mainLayout.removeAll();
+        mainLayout.add(tituloComponent);
+
+        Label infoRegistro = new Label("¿Todavía no tienes una cuenta? Para registrar:");
+        infoRegistro.getStyle().set("font-size", "14px");
+        infoRegistro.getStyle().set("color", "#555");
+        mainLayout.add(infoRegistro);
+
+        Button botonIrRegistro = new Button("Registrar");
+        botonIrRegistro.getStyle().set("background-color", "#1a73e8");
+        botonIrRegistro.getStyle().set("color", "white");
+        botonIrRegistro.getStyle().set("margin-top", "10px");
+        mainLayout.add(botonIrRegistro);
+
+        botonIrRegistro.addClickListener(e -> mostrarRegistro());
+
+        loginForm.setForgotPasswordButtonVisible(false);
+        mainLayout.add(loginForm);
+
+        loginForm.addLoginListener(event -> validaInicioSesion(event.getUsername(), event.getPassword()));
+    }
+
+    private void mostrarRegistro() {
+        mainLayout.removeAll();
+        mainLayout.add(tituloComponent);
+
+        Label infoLogin = new Label("¿Ya tienes una cuenta? Para iniciar sesión:");
+        infoLogin.getStyle().set("font-size", "14px");
+        infoLogin.getStyle().set("color", "#555");
+        mainLayout.add(infoLogin);
+
+        Button botonIrLogin = new Button("Iniciar sesión");
+        botonIrLogin.getStyle().set("background-color", "#1a73e8");
+        botonIrLogin.getStyle().set("color", "white");
+        botonIrLogin.getStyle().set("margin-bottom", "20px");
+        mainLayout.add(botonIrLogin);
+
+        botonIrLogin.addClickListener(e -> mostrarLogin());
+
+        TextField nombreField = new TextField("Nombre completo");
+        TextField loginField = new TextField("Nombre de usuario");
+        PasswordField passwordField = new PasswordField("Contraseña");
+
+        Label passwordInfo = new Label("Mínimo 8 caracteres, incluye número y carácter especial");
+        passwordInfo.getStyle().set("font-size", "12px");
+        passwordInfo.getStyle().set("color", "gray");
+
+        Button enviar = new Button("Registrar");
+        enviar.getStyle().set("background-color", "#1a73e8");
+        enviar.getStyle().set("color", "white");
+        enviar.getStyle().set("width", "100%");
+        enviar.getStyle().set("border-radius", "5px");
+
+        enviar.addClickListener(e -> {
+            try {
+                usuarioService.registrarNuevoUsuario(
+                    loginField.getValue(),
+                    nombreField.getValue(),
+                    passwordField.getValue()
+                );
+                Notification.show("Usuario registrado con éxito", 3000, Notification.Position.MIDDLE);
+                mostrarLogin();
+            } catch (Exception ex) {
+                Notification.show(ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
+        });
+
+        VerticalLayout formLayout = new VerticalLayout(passwordInfo, nombreField, loginField, passwordField, enviar);
+        formLayout.getStyle().set("padding", "20px");
+        formLayout.getStyle().set("background-color", "white");
+        formLayout.getStyle().set("box-shadow", "0 4px 8px rgba(0,0,0,0.1)");
+        formLayout.getStyle().set("border-radius", "10px");
+        formLayout.setWidth("350px");
+
+        mainLayout.add(formLayout);
+    }
 
     public void validaInicioSesion(String username, String password) {
-        // Hace la autenticación usando los datos de la pantalla
-        // si la autenticación sale bien
         if (authenticate(username, password)) {
-            // muestra un mensaje de inicio de sesión
             Notification.show("Inicia sesión para " + username);
-            // asigna el usuario a la sesión
             session.setLoginEnSesion(username);
-            // navega hacia la página principal
             UI.getCurrent().navigate("");
-        // si la atenticación fall
         } else {
-            // muestra un mensaje de error
             loginForm.setError(true);
             Notification.show("Error iniciando sesión", 3000, Notification.Position.MIDDLE);
         }
     }
-    
-    // autentica el usuario
+
     public boolean authenticate(String login, String password) {
         try {
             usuarioService.iniciarSesion(login, password);
-            return true;        
+            return true;
         } catch (Exception e) {
             Notification.show("Error iniciando sesión:" + e.getMessage());
             return false;
         }
-        // return (login.equals(password));
     }
-
 }
