@@ -65,12 +65,17 @@ public class Grupo {
         this.participantes = participantes;
     }
 
-    // Devuelve solo la lista de usuarios para evitar problemas de lazy loading
-    public List<Usuario> getUsuariosParticipantes() {
-        List<Usuario> usuarios = new ArrayList<>();
+    // Método para devolver nombres de usuarios (variables básicas)
+    public List<String> getNombresParticipantes() {
+        List<String> nombres = new ArrayList<>();
         for (ParticipantesGrupo p : participantes) {
-            usuarios.add(p.getUsuario());
+            nombres.add(p.getUsuario().getLogin());
         }
-        return usuarios;
+        return nombres;
+    }
+
+    // Número de participantes (variable básica)
+    public int getCantidadParticipantes() {
+        return participantes.size();
     }
 }

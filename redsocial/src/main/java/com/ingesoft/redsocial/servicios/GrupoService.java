@@ -28,7 +28,6 @@ public class GrupoService {
         this.usuarioRepo = usuarioRepo;
     }
 
-    // Crear grupo
     public Grupo crearGrupo(String loginCreador, String nombre, String descripcion)
             throws UsuarioNotFoundException, GrupoExistenteException {
 
@@ -44,7 +43,6 @@ public class GrupoService {
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
 
-        // Inicializar lista de participantes y agregar creador
         ParticipantesGrupo participanteCreador = new ParticipantesGrupo();
         participanteCreador.setUsuario(creador);
         participanteCreador.setGrupo(grupo);
@@ -53,7 +51,7 @@ public class GrupoService {
         return grupoRepo.save(grupo);
     }
 
-    // Añadir participante a un grupo (desde UI)
+    // Añadir participante con validación
     public void añadirParticipante(Grupo grupo, String loginUsuario)
             throws UsuarioNotFoundException, UsuarioAlreadyInGroupException {
 
@@ -75,18 +73,15 @@ public class GrupoService {
         grupoRepo.save(grupo);
     }
 
-    // Listar todos los grupos
+    // Listar grupos (solo datos básicos)
     public List<Grupo> listarTodos() {
         return grupoRepo.findAll();
     }
 
-    // Obtener participantes de un grupo
-    public List<Usuario> obtenerParticipantes(Long grupoId) throws GrupoNotFoundException {
+    // Obtener nombres de participantes
+    public List<String> obtenerNombresParticipantes(Long grupoId) throws GrupoNotFoundException {
         Grupo grupo = grupoRepo.findById(grupoId)
                 .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
-
-        return grupo.getParticipantes().stream()
-                .map(ParticipantesGrupo::getUsuario)
-                .collect(Collectors.toList());
+        return grupo.getNombresParticipantes();
     }
 }
