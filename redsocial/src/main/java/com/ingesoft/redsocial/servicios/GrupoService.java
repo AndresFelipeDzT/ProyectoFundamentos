@@ -1,6 +1,7 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import com.ingesoft.redsocial.excepciones.GrupoNotFoundException;
 import com.ingesoft.redsocial.excepciones.UsuarioAlreadyInGroupException;
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Grupo;
+import com.ingesoft.redsocial.modelo.ParticipantesGrupo;
 import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.repositorios.GrupoRepository;
 import com.ingesoft.redsocial.repositorios.UsuarioRepository;
@@ -42,8 +44,12 @@ public class GrupoService {
         grupo.setDescripcion(descripcion);
         grupo.setCreador(creador);
 
-        // Agregar creador a lista de participantes
-        grupo.getParticipantes().add(creador);
+        // Crear objeto ParticipantesGrupo para el creador
+        ParticipantesGrupo participanteCreador = new ParticipantesGrupo();
+        participanteCreador.setUsuario(creador);
+        participanteCreador.setGrupo(grupo);
+
+        grupo.getParticipantes().add(participanteCreador);
 
         return grupoRepo.save(grupo);
     }
@@ -58,11 +64,19 @@ public class GrupoService {
         Usuario usuario = usuarioRepo.findById(loginUsuario)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
-        if (grupo.getParticipantes().contains(usuario)) {
+        boolean yaEsMiembro = grupo.getParticipantes().stream()
+                .anyMatch(p -> p.getUsuario().getLogin().equals(loginUsuario));
+
+        if (yaEsMiembro) {
             throw new UsuarioAlreadyInGroupException("Ya eres miembro de este grupo");
         }
 
-        grupo.getParticipantes().add(usuario);
+        ParticipantesGrupo participante = new ParticipantesGrupo();
+        participante.setUsuario(usuario);
+        participante.setGrupo(grupo);
+
+        grupo.getParticipantes().add(participante);
+
         grupoRepo.save(grupo);
     }
 
@@ -75,6 +89,10 @@ public class GrupoService {
     public List<Usuario> obtenerParticipantes(Long grupoId) throws GrupoNotFoundException {
         Grupo grupo = grupoRepo.findById(grupoId)
                 .orElseThrow(() -> new GrupoNotFoundException("Grupo no encontrado"));
-        return grupo.getParticipantes();
+
+        // Devuelve solo usuarios
+        return grupo.getParticipantes().stream()
+                .map(ParticipantesGrupo::getUsuario)
+                .collect(Collectors.toList());
     }
 }

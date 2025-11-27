@@ -1,26 +1,53 @@
 package com.ingesoft.redsocial.modelo;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import lombok.Data;
+import jakarta.persistence.JoinColumn;
 
 @Entity
-@Data
 public class ParticipantesGrupo {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
+    @JoinColumn(name = "usuario_login")
     private Usuario usuario;
 
     @ManyToOne
-     @JsonBackReference // <-- Evita el loop al serializar Grupo
+    @JoinColumn(name = "grupo_id")
     private Grupo grupo;
-}
 
+    public ParticipantesGrupo() {}
+
+    public ParticipantesGrupo(Usuario usuario, Grupo grupo) {
+        this.usuario = usuario;
+        this.grupo = grupo;
+    }
+
+    // Getter explícito
+    public Usuario getUsuario() {
+        return this.usuario;
+    }
+
+    // Setter explícito
+    public void setUsuario(Usuario usuario) {
+        this.usuario = usuario;
+    }
+
+    public Grupo getGrupo() {
+        return this.grupo;
+    }
+
+    public void setGrupo(Grupo grupo) {
+        this.grupo = grupo;
+    }
+
+    public Long getId() {
+        return this.id;
+    }
+}

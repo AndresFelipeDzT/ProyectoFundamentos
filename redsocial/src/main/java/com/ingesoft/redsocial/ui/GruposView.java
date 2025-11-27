@@ -1,20 +1,24 @@
 package com.ingesoft.redsocial.ui;
 
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-// Nueva importación para centrar la tabla
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout; 
-
 import com.ingesoft.redsocial.modelo.Grupo;
+import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.servicios.GrupoService;
 import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
 import com.ingesoft.redsocial.ui.servicio.SessionService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Label;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 
@@ -39,61 +43,110 @@ public class GruposView extends VerticalLayout {
 
         UI.getCurrent().access(this::validarSesion);
 
-        // ********** MODIFICACIONES DE ESTILO **********
-        
-        // 1. Aplicar gama de colores azul de fondo
+        // ********** ESTÉTICA **********
         setSizeFull();
-        getStyle().set("background-color", "#E6F7FF"); // Azul claro
-        setAlignItems(Alignment.CENTER); // Centrar el contenido horizontalmente (campos, botón)
-        
+        getStyle().set("background-color", "#E6F7FF");
+        setAlignItems(Alignment.CENTER);
         add(nav);
 
         nombreGrupo = new TextField("Nombre del grupo");
-        nombreGrupo.setWidth("300px"); 
+        nombreGrupo.setWidth("300px");
         descripcion = new TextField("Descripción");
         descripcion.setWidth("300px");
 
-        // Botón Crear Grupo
         crearGrupo = new Button("Crear Grupo", VaadinIcon.PLUS_CIRCLE.create(), e -> crear());
-        crearGrupo.addThemeVariants(
-            ButtonVariant.LUMO_PRIMARY,
-            ButtonVariant.LUMO_LARGE
-        );
+        crearGrupo.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         crearGrupo.getStyle().set("border-radius", "10px");
         crearGrupo.setWidth("300px");
-        
+
         tabla = new Grid<>(Grupo.class);
         tabla.removeAllColumns();
         tabla.addColumn(Grupo::getNombreGrupo).setHeader("Grupo");
-        // tabla.setWidth("70%"); // Eliminamos esta línea para usar el layout de centrado
+        tabla.addColumn(Grupo::getDescripcion).setHeader("Descripción");
+        tabla.addColumn(g -> g.getParticipantes().size()).setHeader("Miembros");
 
-        // 2. Centrar la Tabla dentro de un HorizontalLayout
+        // Columna con botón “Añadir”
+        tabla.addComponentColumn(g -> {
+            Button btnAñadir = new Button("Añadir", VaadinIcon.PLUS.create());
+            btnAñadir.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            btnAñadir.addClickListener(ev -> mostrarDialogoGrupo(g));
+            return btnAñadir;
+        }).setHeader("Acción");
+
         HorizontalLayout tablaContainer = new HorizontalLayout(tabla);
-        tablaContainer.setWidth("80%"); // Define el ancho del contenedor de la tabla (ajusta si es necesario)
-        tablaContainer.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.CENTER); // Centra la tabla dentro de este contenedor
-        tabla.setWidthFull(); // Hace que la tabla ocupe todo el ancho de su contenedor (tablaContainer)
+        tablaContainer.setWidth("80%");
+        tablaContainer.setJustifyContentMode(JustifyContentMode.CENTER);
+        tabla.setWidthFull();
 
-        // 3. Añadir todos los componentes a la vista
         add(nombreGrupo, descripcion, crearGrupo, tablaContainer);
 
-        // ********** FIN DE MODIFICACIONES DE ESTILO **********
-        
         cargar();
+    }
+
+    private void mostrarDialogoGrupo(Grupo grupo) {
+        Dialog dialog = new Dialog();
+        dialog.setWidth("600px");
+        dialog.setHeight("400px");
+        dialog.getElement().getStyle().set("padding", "20px");
+
+        // Encabezado con nombre y X
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+        H3 titulo = new H3(grupo.getNombreGrupo());
+        Button cerrar = new Button(VaadinIcon.CLOSE.create(), e -> dialog.close());
+
+        header.add(titulo, cerrar);
+
+        // Descripción
+        Label desc = new Label(grupo.getDescripcion());
+        desc.getStyle().set("font-size", "14px");
+
+        // Lista de miembros
+        Grid<Usuario> miembrosGrid = new Grid<>(Usuario.class);
+        miembrosGrid.setItems(grupo.getParticipantes().stream().map(p -> p.getUsuario()).toList());
+        miembrosGrid.removeAllColumns();
+        miembrosGrid.addColumn(Usuario::getLogin).setHeader("Login");
+        miembrosGrid.addColumn(Usuario::getNombre).setHeader("Nombre");
+        miembrosGrid.setHeight("200px");
+
+        VerticalLayout miembrosLayout = new VerticalLayout(new Label("Miembros"), miembrosGrid);
+        miembrosLayout.setWidth("250px");
+
+        // Botón Confirmar unión
+        Button unirse = new Button("Unirse al grupo", e -> {
+            try {
+                grupoService.unirseAGrupo(session.getLoginEnSesion(), grupo.getId());
+                Notification.show("Te uniste al grupo '" + grupo.getNombreGrupo() + "'");
+                cargar();
+                dialog.close();
+            } catch (Exception ex) {
+                Notification.show("No se pudo unir: " + ex.getMessage());
+            }
+        });
+        unirse.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        unirse.setWidthFull();
+
+        HorizontalLayout contenido = new HorizontalLayout(desc, miembrosLayout);
+        contenido.setWidthFull();
+        contenido.setJustifyContentMode(JustifyContentMode.BETWEEN);
+
+        VerticalLayout layoutDialog = new VerticalLayout(header, contenido, unirse);
+        layoutDialog.setSizeFull();
+        layoutDialog.setAlignItems(Alignment.STRETCH);
+
+        dialog.add(layoutDialog);
+        dialog.open();
     }
 
     private void crear() {
         try {
-            grupoService.crearGrupo(
-                session.getLoginEnSesion(),
-                nombreGrupo.getValue(),
-                descripcion.getValue()
-            );
-
+            grupoService.crearGrupo(session.getLoginEnSesion(), nombreGrupo.getValue(), descripcion.getValue());
             Notification.show("Grupo creado exitosamente");
             nombreGrupo.clear();
             descripcion.clear();
             cargar();
-
         } catch (Exception ex) {
             Notification.show("No fue posible crear el grupo: " + ex.getMessage());
         }
@@ -107,6 +160,5 @@ public class GruposView extends VerticalLayout {
         if (session.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
         }
-    
     }
 }

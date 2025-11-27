@@ -1,13 +1,10 @@
 package com.ingesoft.redsocial.modelo;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.*;
-import lombok.Data;
-
 @Entity
-@Data
 public class Grupo {
 
     @Id
@@ -18,15 +15,11 @@ public class Grupo {
     private String descripcion;
 
     @ManyToOne
+    @JoinColumn(name = "creador_login")
     private Usuario creador;
 
-    @ManyToMany
-    @JoinTable(
-        name = "grupo_participantes",
-        joinColumns = @JoinColumn(name = "grupo_id"),
-        inverseJoinColumns = @JoinColumn(name = "usuario_login")
-    )
-    private List<Usuario> participantes = new ArrayList<>();
+    @OneToMany(mappedBy = "grupo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ParticipantesGrupo> participantes = new ArrayList<>();
 
     public Grupo() {}
 
@@ -34,6 +27,50 @@ public class Grupo {
         this.nombreGrupo = nombreGrupo;
         this.descripcion = descripcion;
         this.creador = creador;
-        this.participantes.add(creador); // El creador se agrega automáticamente
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNombreGrupo() {
+        return nombreGrupo;
+    }
+
+    public void setNombreGrupo(String nombreGrupo) {
+        this.nombreGrupo = nombreGrupo;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public Usuario getCreador() {
+        return creador;
+    }
+
+    public void setCreador(Usuario creador) {
+        this.creador = creador;
+    }
+
+    public List<ParticipantesGrupo> getParticipantes() {
+        return participantes;
+    }
+
+    public void setParticipantes(List<ParticipantesGrupo> participantes) {
+        this.participantes = participantes;
+    }
+
+    // Método nuevo que devuelve solo usuarios
+    public List<Usuario> getUsuariosParticipantes() {
+        List<Usuario> usuarios = new ArrayList<>();
+        for (ParticipantesGrupo p : participantes) {
+            usuarios.add(p.getUsuario());
+        }
+        return usuarios;
     }
 }
