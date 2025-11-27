@@ -1,16 +1,27 @@
 package com.ingesoft.redsocial.modelo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 
+@Entity
 @Data
 public class PerfilAcademico {
 
-    private Long id;
-    private String carrera;
-    private String semestre;
-    private String habilidades;
+    @Id
+    @GeneratedValue
+    Long id;
 
+    String carrera;
+    String semestre;
+    String habilidades;
+
+    @OneToOne
     @JsonIgnore
-    private Usuario usuario;
+    Usuario usuario;
+
 }

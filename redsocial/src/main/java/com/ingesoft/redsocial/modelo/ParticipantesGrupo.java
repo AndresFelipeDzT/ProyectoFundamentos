@@ -1,15 +1,26 @@
 package com.ingesoft.redsocial.modelo;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
+@Entity
 @Data
 public class ParticipantesGrupo {
 
-    private Long id; // Puedes seguir usando System.currentTimeMillis() o un contador para IDs
+    @Id
+    @GeneratedValue
+    private Long id;
 
+    @ManyToOne
     private Usuario usuario;
 
-    @JsonBackReference // Evita loop al serializar Grupo
+    @ManyToOne
+     @JsonBackReference // <-- Evita el loop al serializar Grupo
     private Grupo grupo;
 }
+

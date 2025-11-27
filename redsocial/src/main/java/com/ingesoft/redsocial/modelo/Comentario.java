@@ -1,15 +1,28 @@
 package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Data;
 
+@Entity
 @Data
 public class Comentario {
 
-    private Long id;
-    private String texto;
-    private LocalDateTime fecha;
+    @Id
+    @GeneratedValue
+    Long id;
 
-    private Usuario autor;
-    private Publicacion publicacion;
+    String texto;
+
+    LocalDateTime fecha;
+
+    @ManyToOne
+    Usuario autor;
+
+    @ManyToOne
+    Publicacion publicacion;
 }

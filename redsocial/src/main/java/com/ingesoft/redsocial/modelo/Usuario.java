@@ -2,25 +2,38 @@ package com.ingesoft.redsocial.modelo;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 
+@Entity
 @Data
 public class Usuario {
 
+    @Id
     private String login;
     private String nombre;
     private String password;
 
-    // Relaciones
+    @OneToMany(mappedBy = "remitente")
     private List<SolicitudAmistad> solicitudesEnviadas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "destinatario")
     private List<SolicitudAmistad> solicitudesRecibidas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "creador")
     private List<Grupo> gruposCreados = new ArrayList<>();
 
-    @JsonIgnore
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
     private PerfilAcademico perfil;
 
+    @OneToMany(mappedBy = "autor")
     private List<Publicacion> publicaciones = new ArrayList<>();
+
+    @OneToMany(mappedBy = "autor")
     private List<Comentario> comentarios = new ArrayList<>();
 
     public Usuario() {}

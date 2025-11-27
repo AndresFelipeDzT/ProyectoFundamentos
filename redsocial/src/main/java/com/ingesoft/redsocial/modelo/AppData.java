@@ -5,21 +5,23 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class AppData {
 
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final File usuariosFile = new File("usuarios.json");
+    private final File gruposFile = new File("grupos.json");
+
     private List<Usuario> usuarios = new ArrayList<>();
     private List<Grupo> grupos = new ArrayList<>();
-    private List<SolicitudAmistad> solicitudes = new ArrayList<>();
-
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final File archivo = new File("appdata.json");
 
     public AppData() {
-        cargarDatos();
+        cargar();
     }
 
     public List<Usuario> getUsuarios() {
@@ -30,35 +32,23 @@ public class AppData {
         return grupos;
     }
 
-    public List<SolicitudAmistad> getSolicitudes() {
-        return solicitudes;
-    }
-
-    public List<ParticipantesGrupo> getParticipantes(Long grupoId) {
-        for (Grupo g : grupos) {
-            if (g.getId().equals(grupoId)) {
-                return g.getParticipantes();
-            }
-        }
-        return new ArrayList<>();
-    }
-
-    private void cargarDatos() {
+    public void guardarCambios() {
         try {
-            if (archivo.exists()) {
-                AppData data = mapper.readValue(archivo, AppData.class);
-                this.usuarios = data.getUsuarios();
-                this.grupos = data.getGrupos();
-                this.solicitudes = data.getSolicitudes();
-            }
+            mapper.writerWithDefaultPrettyPrinter().writeValue(usuariosFile, usuarios);
+            mapper.writerWithDefaultPrettyPrinter().writeValue(gruposFile, grupos);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void guardarCambios() {
+    public void cargar() {
         try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(archivo, this);
+            if (usuariosFile.exists()) {
+                usuarios = mapper.readValue(usuariosFile, new TypeReference<List<Usuario>>() {});
+            }
+            if (gruposFile.exists()) {
+                grupos = mapper.readValue(gruposFile, new TypeReference<List<Grupo>>() {});
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
