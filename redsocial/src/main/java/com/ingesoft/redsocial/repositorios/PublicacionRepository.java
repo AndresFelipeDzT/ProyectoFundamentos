@@ -5,39 +5,39 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
 
 import com.ingesoft.redsocial.modelo.Publicacion;
 
+@Repository
 public interface PublicacionRepository extends JpaRepository<Publicacion, Long> {
 
-    // Carga todas las publicaciones con comentarios, autores y reacciones
-    @Query("SELECT DISTINCT p FROM Publicacion p " +
-           "LEFT JOIN FETCH p.comentarios c " +
-           "LEFT JOIN FETCH p.autor a " +
-           "LEFT JOIN FETCH c.autor " +
-           "LEFT JOIN FETCH c.reacciones")
-    List<Publicacion> findAllWithComentariosYAutor();
+    // Carga todas las publicaciones con comentarios, autores y respuestas de los comentarios
+    @EntityGraph(attributePaths = {
+        "autor",
+        "comentarios",
+        "comentarios.autor",
+        "comentarios.respuestas",
+        "comentarios.respuestas.autor"
+    })
+    List<Publicacion> findAllByOrderByFechaCreacionDesc();
 
-    // Carga una publicación específica con todos los comentarios y reacciones
-    @Query("SELECT p FROM Publicacion p " +
-           "LEFT JOIN FETCH p.comentarios c " +
-           "LEFT JOIN FETCH p.autor a " +
-           "LEFT JOIN FETCH c.autor " +
-           "LEFT JOIN FETCH c.reacciones " +
-           "WHERE p.id = :id")
-    Optional<Publicacion> findByIdWithComentarios(Long id);
-
+    // Carga una publicación específica con comentarios, autores y respuestas
+    @EntityGraph(attributePaths = {
+        "autor",
+        "comentarios",
+        "comentarios.autor",
+        "comentarios.respuestas",
+        "comentarios.respuestas.autor"
+    })
     Optional<Publicacion> findById(Long id);
 
-     @Query("SELECT DISTINCT p FROM Publicacion p " +
-           "LEFT JOIN FETCH p.comentarios c " +
-           "LEFT JOIN FETCH c.reacciones " +
-           "LEFT JOIN FETCH c.respuestas " +
-           "LEFT JOIN FETCH p.autor " +
-           "ORDER BY p.fechaCreacion DESC")
-    List<Publicacion> findAllWithComentariosYReacciones();
-
-     @EntityGraph(attributePaths = {"autor", "comentarios", "comentarios.autor", "comentarios.respuestas"})
-    List<Publicacion> findAllByOrderByFechaCreacionDesc();
+    // Trae todos los comentarios de una publicación específica
+    @EntityGraph(attributePaths = {
+        "comentarios",
+        "comentarios.autor",
+        "comentarios.respuestas",
+        "comentarios.respuestas.autor"
+    })
+    List<Publicacion> findByIdOrderByFechaCreacionDesc(Long id);
 }
