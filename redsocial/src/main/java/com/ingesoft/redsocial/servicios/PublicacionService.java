@@ -24,6 +24,7 @@ public class PublicacionService {
 
     public Publicacion crearPublicacion(String loginUsuario, String contenido, String rutaImagen)
             throws UsuarioNotFoundException {
+
         Usuario autor = usuarioRepositorio.findByLogin(loginUsuario)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
@@ -40,7 +41,7 @@ public class PublicacionService {
         return publicacionRepositorio.findAllByOrderByFechaCreacionDesc();
     }
 
-    public Publicacion obtenerPorIdConComentarios(Long id) throws PublicacionNotFoundException {
+    public Publicacion obtenerPorId(Long id) throws PublicacionNotFoundException {
         return publicacionRepositorio.findById(id)
                 .orElseThrow(() -> new PublicacionNotFoundException("Publicación no encontrada"));
     }

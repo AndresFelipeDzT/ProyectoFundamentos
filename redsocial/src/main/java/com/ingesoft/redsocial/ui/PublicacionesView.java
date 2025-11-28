@@ -24,7 +24,6 @@ import com.vaadin.flow.router.Route;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.ingesoft.redsocial.excepciones.ComentarioNotFoundException;
 import com.ingesoft.redsocial.excepciones.PublicacionNotFoundException;
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Comentario;
@@ -103,7 +102,6 @@ public class PublicacionesView extends VerticalLayout {
                 try {
                     abrirDialogPublicacion(p);
                 } catch (PublicacionNotFoundException e1) {
-                    // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
             });
@@ -161,7 +159,7 @@ public class PublicacionesView extends VerticalLayout {
     }
 
     private void abrirDialogPublicacion(Publicacion publicacion) throws PublicacionNotFoundException {
-        Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
+        Publicacion pubCompleta = publicacionService.obtenerPorId(publicacion.getId());
 
         Dialog dialog = new Dialog();
         dialog.setWidth("600px");
@@ -188,8 +186,7 @@ public class PublicacionesView extends VerticalLayout {
                 try {
                     comentarioService.crearComentario(sessionService.getLoginEnSesion(),
                             pubCompleta.getId(),
-                            textoComentario,
-                            null
+                            textoComentario
                     );
                 } catch (UsuarioNotFoundException | PublicacionNotFoundException ex) {
                     ex.printStackTrace();
@@ -199,7 +196,6 @@ public class PublicacionesView extends VerticalLayout {
                 try {
                     recargarComentarios(pubCompleta.getId(), comentariosModal);
                 } catch (PublicacionNotFoundException e1) {
-                    // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
             }
@@ -217,7 +213,7 @@ public class PublicacionesView extends VerticalLayout {
 
     private void recargarComentarios(Long publicacionId, VerticalLayout comentariosModal) throws PublicacionNotFoundException {
         comentariosModal.removeAll();
-        Publicacion actualizado = publicacionService.obtenerPorIdConComentarios(publicacionId);
+        Publicacion actualizado = publicacionService.obtenerPorId(publicacionId);
         for (Comentario c : actualizado.getComentarios()) {
             comentariosModal.add(crearLayoutComentarioModal(c));
         }
@@ -234,15 +230,6 @@ public class PublicacionesView extends VerticalLayout {
         Label texto = new Label(c.getTexto());
 
         layout.add(autor, texto);
-
-        if (c.getRespuestas() != null) {
-            for (Comentario r : c.getRespuestas()) {
-                VerticalLayout respuestaLayout = crearLayoutComentarioModal(r);
-                respuestaLayout.getStyle().set("margin-left", "20px");
-                layout.add(respuestaLayout);
-            }
-        }
-
         return layout;
     }
 

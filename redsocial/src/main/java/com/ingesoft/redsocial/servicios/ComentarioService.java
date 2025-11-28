@@ -28,7 +28,7 @@ public class ComentarioService {
     @Autowired
     private PublicacionRepository publicacionRepositorio;
 
-    public Comentario crearComentario(String loginAutor, Long idPublicacion, String texto, Comentario respuestaPadre)
+    public Comentario crearComentario(String loginAutor, Long idPublicacion, String texto)
             throws UsuarioNotFoundException, PublicacionNotFoundException {
 
         Usuario autor = usuarioRepositorio.findByLogin(loginAutor)
@@ -43,14 +43,10 @@ public class ComentarioService {
         c.setFecha(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         c.setPublicacion(publicacion);
 
-        if (respuestaPadre != null) {
-            c.setRespuestaPadre(respuestaPadre);
-        }
-
         return comentarioRepositorio.save(c);
     }
 
-    public Comentario obtenerPorIdConRespuestas(Long id) throws ComentarioNotFoundException {
+    public Comentario obtenerPorId(Long id) throws ComentarioNotFoundException {
         return comentarioRepositorio.findById(id)
                 .orElseThrow(() -> new ComentarioNotFoundException("Comentario no encontrado"));
     }

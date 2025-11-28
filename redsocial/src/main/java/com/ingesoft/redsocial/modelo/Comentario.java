@@ -1,8 +1,7 @@
 package com.ingesoft.redsocial.modelo;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,7 +16,6 @@ public class Comentario {
     private Long id;
 
     private String texto;
-
     private String fecha;
 
     @ManyToOne
@@ -28,69 +26,21 @@ public class Comentario {
     @JoinColumn(name = "publicacion_id")
     private Publicacion publicacion;
 
-    @ManyToOne
-    @JoinColumn(name = "respuesta_padre_id")
-    private Comentario respuestaPadre;
-
-    @OneToMany(mappedBy = "padre", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<Comentario> respuestas = new HashSet<>();
+    // Eliminamos respuestaPadre y respuestas para simplificar
 
     // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getTexto() { return texto; }
+    public void setTexto(String texto) { this.texto = texto; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getFecha() { return fecha; }
+    public void setFecha(String fecha) { this.fecha = fecha; }
 
-    public String getTexto() {
-        return texto;
-    }
+    public Usuario getAutor() { return autor; }
+    public void setAutor(Usuario autor) { this.autor = autor; }
 
-    public void setTexto(String texto) {
-        this.texto = texto;
-    }
-
-    public String getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(String fecha) {
-        this.fecha = fecha;
-    }
-
-    public Usuario getAutor() {
-        return autor;
-    }
-
-    public void setAutor(Usuario autor) {
-        this.autor = autor;
-    }
-
-    public Publicacion getPublicacion() {
-        return publicacion;
-    }
-
-    public void setPublicacion(Publicacion publicacion) {
-        this.publicacion = publicacion;
-    }
-
-    public Comentario getRespuestaPadre() {
-        return respuestaPadre;
-    }
-
-    public void setRespuestaPadre(Comentario respuestaPadre) {
-        this.respuestaPadre = respuestaPadre;
-    }
-
-    public Set<Comentario> getRespuestas() {
-        return respuestas;
-    }
-
-    public void setRespuestas(Set<Comentario> respuestas) {
-        this.respuestas = respuestas;
-    }
+    public Publicacion getPublicacion() { return publicacion; }
+    public void setPublicacion(Publicacion publicacion) { this.publicacion = publicacion; }
 }

@@ -1,9 +1,7 @@
 package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -18,9 +16,7 @@ public class Publicacion {
     private Long id;
 
     private String contenido;
-
     private String rutaImagen;
-
     private LocalDateTime fechaCreacion;
 
     @ManyToOne
@@ -28,56 +24,25 @@ public class Publicacion {
     private Usuario autor;
 
     @OneToMany(mappedBy = "publicacion", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore  // Evita ciclos al serializar
+    @JsonIgnore
     private Set<Comentario> comentarios = new HashSet<>();
 
     // Getters y Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getContenido() { return contenido; }
+    public void setContenido(String contenido) { this.contenido = contenido; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getRutaImagen() { return rutaImagen; }
+    public void setRutaImagen(String rutaImagen) { this.rutaImagen = rutaImagen; }
 
-    public String getContenido() {
-        return contenido;
-    }
+    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
+    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
 
-    public void setContenido(String contenido) {
-        this.contenido = contenido;
-    }
+    public Usuario getAutor() { return autor; }
+    public void setAutor(Usuario autor) { this.autor = autor; }
 
-    public String getRutaImagen() {
-        return rutaImagen;
-    }
-
-    public void setRutaImagen(String rutaImagen) {
-        this.rutaImagen = rutaImagen;
-    }
-
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-
-    public Usuario getAutor() {
-        return autor;
-    }
-
-    public void setAutor(Usuario autor) {
-        this.autor = autor;
-    }
-
-    public Set<Comentario> getComentarios() {
-        return comentarios;
-    }
-
-    public void setComentarios(Set<Comentario> comentarios) {
-        this.comentarios = comentarios;
-    }
+    public Set<Comentario> getComentarios() { return comentarios; }
+    public void setComentarios(Set<Comentario> comentarios) { this.comentarios = comentarios; }
 }
