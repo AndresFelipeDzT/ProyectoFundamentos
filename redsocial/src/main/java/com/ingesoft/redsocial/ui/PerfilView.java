@@ -1,124 +1,190 @@
 package com.ingesoft.redsocial.ui;
 
-import com.ingesoft.redsocial.modelo.PerfilAcademico;
-import com.ingesoft.redsocial.servicios.PerfilAcademicoService;
-import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
-import com.ingesoft.redsocial.ui.servicio.SessionService;
-
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.ingesoft.redsocial.modelo.PerfilAcademico;
+import com.ingesoft.redsocial.modelo.Usuario;
+import com.ingesoft.redsocial.servicios.PerfilAcademicoService;
+import com.ingesoft.redsocial.servicios.UsuarioService;
+import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
+import com.ingesoft.redsocial.ui.servicio.SessionService;
 
 @Route("perfil")
-@PageTitle("Perfil Académico")
+@PageTitle("Mi Perfil")
 public class PerfilView extends VerticalLayout {
 
-    SessionService sessionService;
-    NavegacionComponent navegacion;
-    PerfilAcademicoService perfilService;
+    private final SessionService sessionService;
+    private final PerfilAcademicoService perfilService;
+    private final UsuarioService usuarioService;
 
+    private PerfilAcademico perfil;
+    private Usuario usuario;
+
+    // COMPONENTES
+    Avatar avatar;
+    Span lblUsuario;
+    TextField nombre;
     TextField carrera;
     TextField semestre;
-    TextArea habilidades;
-    TextField usuarioNombre;
+    TextField habilidades;
 
-    Button guardar;
-    PerfilAcademico perfil;
+    Button btnEditar;
+    Button btnGuardar;
 
-    public PerfilView(
-        SessionService sessionService,
-        NavegacionComponent navegacion,
-        PerfilAcademicoService perfilService
-    ) {
+    public PerfilView(SessionService sessionService,
+                      NavegacionComponent navegacion,
+                      PerfilAcademicoService perfilService,
+                      UsuarioService usuarioService) {
 
         this.sessionService = sessionService;
-        this.navegacion = navegacion;
         this.perfilService = perfilService;
+        this.usuarioService = usuarioService;
 
-        validarSesion();
+        // Validar sesión
+        if (sessionService.getLoginEnSesion() == null) {
+            UI.getCurrent().navigate("login");
+        }
 
         setSizeFull();
-        getStyle().set("background-color", "#E6F7FF");
         setAlignItems(Alignment.CENTER);
+        getStyle().set("background-color", "#E6F7FF");
 
         H3 titulo = new H3("Mi Perfil Académico");
         titulo.getStyle().set("color", "#007BFF");
 
         add(navegacion, titulo);
 
-        // Usuario NO editable
-        usuarioNombre = new TextField("Usuario");
-        usuarioNombre.setWidth("350px");
-        usuarioNombre.setReadOnly(true);
+        cargarDatosUsuario();
+        construirUI();
+        ponerModoLectura();
+    }
+
+    // -------- CARGAR DATOS --------
+    private void cargarDatosUsuario() {
+        String login = sessionService.getLoginEnSesion();
+        try {
+            usuario = usuarioService.obtenerPorLogin(login);
+            perfil = perfilService.obtenerPerfil(login);
+
+            if (perfil == null) {
+                perfil = new PerfilAcademico(); // vacío
+            }
+
+        } catch (Exception e) {
+            Notification.show("Error cargando perfil: " + e.getMessage());
+        }
+    }
+
+    // -------- CREAR UI --------
+    private void construirUI() {
+
+        // FOTO
+        avatar = new Avatar(usuario.getNombre());
+        avatar.setImage(null); 
+        avatar.setColorIndex(4);
+        avatar.setHeight("110px");
+        avatar.setWidth("110px");
+
+        // DATOS FIJOS
+        lblUsuario = new Span("Usuario: " + usuario.getLogin());
+        lblUsuario.getStyle().set("font-weight", "bold");
+
+        nombre = new TextField("Nombre");
+        nombre.setValue(usuario.getNombre());
+        nombre.setWidth("350px");
 
         carrera = new TextField("Carrera");
+        carrera.setValue(perfil.getCarrera() != null ? perfil.getCarrera() : "");
         carrera.setWidth("350px");
 
         semestre = new TextField("Semestre");
+        semestre.setValue(perfil.getSemestre() != null ? perfil.getSemestre() : "");
         semestre.setWidth("350px");
 
-        habilidades = new TextArea("Habilidades principales");
+        habilidades = new TextField("Habilidades");
+        habilidades.setValue(perfil.getHabilidades() != null ? perfil.getHabilidades() : "");
         habilidades.setWidth("350px");
-        habilidades.setHeight("120px");
 
-        cargarDatos();
+        // BOTÓN EDITAR
+        btnEditar = new Button("Editar", new Icon(VaadinIcon.EDIT));
+        btnEditar.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+        btnEditar.getStyle().set("border-radius", "8px");
+        btnEditar.addClickListener(e -> ponerModoEdicion());
 
-        guardar = new Button("Guardar cambios", e -> guardarPerfil());
-        guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
-        guardar.getStyle().set("border-radius", "10px");
-        guardar.setWidth("350px");
+        // BOTÓN GUARDAR
+        btnGuardar = new Button("Guardar cambios", new Icon(VaadinIcon.CHECK));
+        btnGuardar.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        btnGuardar.getStyle().set("border-radius", "8px");
+        btnGuardar.setVisible(false);
+        btnGuardar.addClickListener(e -> guardarCambios());
 
-        add(usuarioNombre, carrera, semestre, habilidades, guardar);
+        // LAYOUT SUPERIOR (FOTO + INFORMACIÓN)
+        HorizontalLayout header = new HorizontalLayout();
+        header.setSpacing(true);
+        header.setAlignItems(Alignment.CENTER);
+
+        VerticalLayout datos = new VerticalLayout(lblUsuario, nombre);
+        datos.setSpacing(false);
+
+        header.add(avatar, datos, btnEditar);
+
+        add(header, carrera, semestre, habilidades, btnGuardar);
     }
 
-    private void cargarDatos() {
-        String login = sessionService.getLoginEnSesion();
-        usuarioNombre.setValue(login);
+    // -------- MODO LECTURA --------
+    private void ponerModoLectura() {
+        nombre.setReadOnly(true);
+        carrera.setReadOnly(true);
+        semestre.setReadOnly(true);
+        habilidades.setReadOnly(true);
 
-        try {
-            perfil = perfilService.obtenerPerfil(login);
-
-            carrera.setValue(perfil.getCarrera() != null ? perfil.getCarrera() : "");
-            semestre.setValue(perfil.getSemestre() != null ? perfil.getSemestre() : "");
-            habilidades.setValue(perfil.getHabilidades() != null ? perfil.getHabilidades() : "");
-
-        } catch (Exception e) {
-            Notification.show("No hay perfil aún. Puedes crear uno.");
-        }
+        btnEditar.setVisible(true);
+        btnGuardar.setVisible(false);
     }
 
-    private void guardarPerfil() {
+    // -------- MODO EDICIÓN --------
+    private void ponerModoEdicion() {
+        nombre.setReadOnly(false);
+        carrera.setReadOnly(false);
+        semestre.setReadOnly(false);
+        habilidades.setReadOnly(false);
 
-        if (carrera.isEmpty() || semestre.isEmpty()) {
-            Notification.show("Carrera y semestre no pueden estar vacíos");
-            return;
-        }
+        btnEditar.setVisible(false);
+        btnGuardar.setVisible(true);
+    }
 
+    // -------- GUARDAR --------
+    private void guardarCambios() {
         try {
+            usuario.setNombre(nombre.getValue());
+            usuarioService.actualizarNombre(usuario);
+
             perfilService.actualizarPerfil(
-                sessionService.getLoginEnSesion(),
-                carrera.getValue(),
-                semestre.getValue(),
-                habilidades.getValue()
+                    usuario.getLogin(),
+                    carrera.getValue(),
+                    semestre.getValue(),
+                    habilidades.getValue()
             );
 
+            ponerModoLectura();
             Notification.show("Perfil actualizado correctamente");
 
         } catch (Exception e) {
-            Notification.show("Error guardando perfil: " + e.getMessage());
-        }
-    }
-
-    private void validarSesion() {
-        if (sessionService.getLoginEnSesion() == null) {
-            UI.getCurrent().navigate("login");
+            Notification.show("Error: " + e.getMessage());
         }
     }
 }

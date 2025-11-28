@@ -72,4 +72,13 @@ public class UsuarioService {
     public List<Usuario> getUsuarios() {
         return usuarioRepo.findAll();
     }
+
+    public void actualizarNombre(Usuario usuario) {
+        usuarioRepo.save(usuario);
+    }
+    public Usuario obtenerPorLogin(String login) {
+        return usuarioRepo.findById(login)
+                .orElseThrow(() -> new RuntimeException("No existe usuario con login: " + login));
+    }
+
 }
