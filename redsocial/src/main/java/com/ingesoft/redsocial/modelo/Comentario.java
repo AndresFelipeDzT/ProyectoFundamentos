@@ -2,7 +2,9 @@ package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -26,11 +28,11 @@ public class Comentario {
     private Publicacion publicacion;
 
     @ManyToOne
-    private Comentario comentarioPadre; // Para respuestas
+    private Comentario comentarioPadre;
 
     @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY)
-    private List<Comentario> respuestas;
+    private Set<Comentario> respuestas = new HashSet<>();
 
     @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY)
-    private List<Reaccion> reacciones;
+    private Set<Reaccion> reacciones = new HashSet<>();
 }

@@ -2,7 +2,9 @@ package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -24,5 +26,6 @@ public class Publicacion {
     private Usuario autor;
 
     @OneToMany(mappedBy = "publicacion", fetch = FetchType.LAZY)
-    private List<Comentario> comentarios;
+    private Set<Comentario> comentarios = new HashSet<>();
+    
 }
