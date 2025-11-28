@@ -1,4 +1,3 @@
-// ---------------- PublicacionesView.java ----------------
 package com.ingesoft.redsocial.ui;
 
 import java.io.File;
@@ -104,6 +103,7 @@ public class PublicacionesView extends VerticalLayout {
         tabla.addColumn(p -> p.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
              .setHeader("Fecha").setAutoWidth(true);
 
+        // Botón Ver / Comentar
         tabla.addComponentColumn(p -> {
             Button ver = new Button("Ver / Comentar", e -> abrirDialogPublicacion(p));
             ver.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -156,12 +156,13 @@ public class PublicacionesView extends VerticalLayout {
 
     // ---------------- Cargar feed ----------------
     private void cargarFeed() {
-        List<Publicacion> publicaciones = publicacionService.obtenerFeedConComentariosYReacciones();
+        List<Publicacion> publicaciones = publicacionService.obtenerFeed();
         tabla.setItems(publicaciones);
     }
 
     // ---------------- Abrir dialog de publicación ----------------
     private void abrirDialogPublicacion(Publicacion publicacion) {
+        // Cargar publicación completa con comentarios y reacciones
         Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
 
         Dialog dialog = new Dialog();
@@ -173,13 +174,18 @@ public class PublicacionesView extends VerticalLayout {
         contenido.setWidthFull();
         contenido.setSpacing(true);
 
+        // Info publicación
         Label autor = new Label(pubCompleta.getAutor().getNombre() + " - " +
                 pubCompleta.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         Label texto = new Label(pubCompleta.getContenido());
         contenido.add(autor, texto);
 
+        // Área para comentar
         TextArea areaComentario = new TextArea("Escribe un comentario...");
         areaComentario.setWidthFull();
+        VerticalLayout comentariosModal = new VerticalLayout();
+        comentariosModal.setWidthFull();
+
         Button enviarComentario = new Button("Comentar", e -> {
             String textoComentario = areaComentario.getValue();
             if (textoComentario != null && !textoComentario.isEmpty()) {
@@ -197,20 +203,23 @@ public class PublicacionesView extends VerticalLayout {
                     e1.printStackTrace();
                 }
                 areaComentario.clear();
-                dialog.removeAll();
-                abrirDialogPublicacion(publicacion);
+                comentariosModal.removeAll(); // limpia y recarga
+                Publicacion actualizado = publicacionService.obtenerPorIdConComentarios(pubCompleta.getId());
+                for (Comentario c : actualizado.getComentarios()) {
+                    comentariosModal.add(crearLayoutComentarioModal(c));
+                }
             }
         });
+
         HorizontalLayout comentarioControls = new HorizontalLayout(areaComentario, enviarComentario);
         comentarioControls.setWidthFull();
-        contenido.add(comentarioControls);
 
-        VerticalLayout comentariosModal = new VerticalLayout();
-        comentariosModal.setWidthFull();
+        contenido.add(comentarioControls, comentariosModal);
+
+        // Comentarios iniciales
         for (Comentario c : pubCompleta.getComentarios()) {
             comentariosModal.add(crearLayoutComentarioModal(c));
         }
-        contenido.add(comentariosModal);
 
         dialog.add(contenido);
         dialog.open();
@@ -227,27 +236,29 @@ public class PublicacionesView extends VerticalLayout {
         Label autor = new Label(c.getAutor().getNombre() + " - " + c.getFecha());
         Label texto = new Label(c.getTexto());
 
+        // Reacciones con actualización dinámica
         HorizontalLayout acciones = new HorizontalLayout();
-        Button like = new Button("👍 " + contarReacciones(c, Reaccion.TipoReaccion.LIKE), e -> {
+        Label contadorLike = new Label(String.valueOf(contarReacciones(c, Reaccion.TipoReaccion.LIKE)));
+        Label contadorDislike = new Label(String.valueOf(contarReacciones(c, Reaccion.TipoReaccion.DISLIKE)));
+
+        Button like = new Button("👍", e -> {
             try {
                 reaccionService.reaccionar(sessionService.getLoginEnSesion(), c.getId(), Reaccion.TipoReaccion.LIKE);
-            } catch (UsuarioNotFoundException ex) {
-                ex.printStackTrace();
-            }
-            abrirDialogPublicacion(c.getPublicacion());
+                contadorLike.setText(String.valueOf(contarReacciones(c, Reaccion.TipoReaccion.LIKE)));
+            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); }
         });
-        Button dislike = new Button("👎 " + contarReacciones(c, Reaccion.TipoReaccion.DISLIKE), e -> {
+
+        Button dislike = new Button("👎", e -> {
             try {
                 reaccionService.reaccionar(sessionService.getLoginEnSesion(), c.getId(), Reaccion.TipoReaccion.DISLIKE);
-            } catch (UsuarioNotFoundException ex) {
-                ex.printStackTrace();
-            }
-            abrirDialogPublicacion(c.getPublicacion());
+                contadorDislike.setText(String.valueOf(contarReacciones(c, Reaccion.TipoReaccion.DISLIKE)));
+            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); }
         });
 
-        acciones.add(like, dislike);
+        acciones.add(like, contadorLike, dislike, contadorDislike);
         layout.add(autor, texto, acciones);
 
+        // Respuestas recursivas
         if (c.getRespuestas() != null) {
             for (Comentario r : c.getRespuestas()) {
                 VerticalLayout respuestaLayout = crearLayoutComentarioModal(r);
@@ -259,10 +270,12 @@ public class PublicacionesView extends VerticalLayout {
         return layout;
     }
 
+    // ---------------- Contar reacciones ----------------
     private int contarReacciones(Comentario c, Reaccion.TipoReaccion tipo) {
         return (int) c.getReacciones().stream().filter(r -> r.getTipo() == tipo).count();
     }
 
+    // ---------------- Validar sesión ----------------
     private void validarSesion() {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
