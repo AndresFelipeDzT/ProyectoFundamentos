@@ -21,7 +21,6 @@ import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
@@ -55,13 +54,10 @@ public class PublicacionesView extends VerticalLayout {
 
     private TextArea areaPublicacion;
     private Grid<Publicacion> tabla;
-
     private FileBuffer buffer = new FileBuffer();
     private Upload uploadComponent = new Upload(buffer);
 
     private static final String UPLOAD_DIR = "uploads" + File.separator;
-
-    private Publicacion publicacionActual;
 
     public PublicacionesView(SessionService sessionService,
                              NavegacionComponent navegacion,
@@ -123,7 +119,6 @@ public class PublicacionesView extends VerticalLayout {
         cargarFeed();
     }
 
-    // ----------------------------
     private void publicar() {
         String contenido = areaPublicacion.getValue();
         String login = sessionService.getLoginEnSesion();
@@ -149,7 +144,6 @@ public class PublicacionesView extends VerticalLayout {
             }
 
             publicacionService.crearPublicacion(login, contenido, rutaImagen);
-
             areaPublicacion.clear();
             buffer = new FileBuffer();
             uploadComponent.setReceiver(buffer);
@@ -160,15 +154,12 @@ public class PublicacionesView extends VerticalLayout {
         }
     }
 
-    // ----------------------------
     private void cargarFeed() {
         List<Publicacion> publicaciones = publicacionService.obtenerFeed();
         tabla.setItems(publicaciones);
     }
 
-    // ----------------------------
     private void mostrarDetallePublicacion(Publicacion publicacion) {
-        // Cargar publicación completa con comentarios y reacciones
         Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
 
         Dialog dialog = new Dialog();
@@ -180,7 +171,7 @@ public class PublicacionesView extends VerticalLayout {
         contenido.setWidthFull();
         contenido.setSpacing(true);
 
-        // Información de la publicación
+        // Info publicación
         Label autor = new Label(pubCompleta.getAutor().getNombre() + " - " +
                 pubCompleta.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         Label texto = new Label(pubCompleta.getContenido());
@@ -199,9 +190,8 @@ public class PublicacionesView extends VerticalLayout {
                             textoComentario,
                             null
                     );
-                } catch (UsuarioNotFoundException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                } catch (UsuarioNotFoundException ex) {
+                    ex.printStackTrace();
                 }
                 areaComentario.clear();
                 dialog.removeAll();
@@ -210,23 +200,18 @@ public class PublicacionesView extends VerticalLayout {
         });
         HorizontalLayout comentarioControls = new HorizontalLayout(areaComentario, enviarComentario);
         comentarioControls.setWidthFull();
-
         contenido.add(comentarioControls);
 
         // Mostrar comentarios
-        VerticalLayout comentariosModal = new VerticalLayout();
-        comentariosModal.setWidthFull();
         for (Comentario c : pubCompleta.getComentarios()) {
-            comentariosModal.add(crearLayoutComentarioModal(c));
+            contenido.add(crearLayoutComentarioModal(c, dialog));
         }
-        contenido.add(comentariosModal);
 
         dialog.add(contenido);
         dialog.open();
     }
 
-    // ----------------------------
-    private VerticalLayout crearLayoutComentarioModal(Comentario c) {
+    private VerticalLayout crearLayoutComentarioModal(Comentario c, Dialog dialog) {
         VerticalLayout layout = new VerticalLayout();
         layout.setWidthFull();
         layout.getStyle().set("background-color", "#F0F8FF")
@@ -240,47 +225,38 @@ public class PublicacionesView extends VerticalLayout {
         Button like = new Button("👍 " + contarReacciones(c, Reaccion.TipoReaccion.LIKE), e -> {
             try {
                 reaccionService.reaccionar(sessionService.getLoginEnSesion(), c.getId(), Reaccion.TipoReaccion.LIKE);
-            } catch (UsuarioNotFoundException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-            refrescarDialog(c.getPublicacion());
+            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); }
+            refrescarDialog(dialog, c.getPublicacion());
         });
         Button dislike = new Button("👎 " + contarReacciones(c, Reaccion.TipoReaccion.DISLIKE), e -> {
             try {
                 reaccionService.reaccionar(sessionService.getLoginEnSesion(), c.getId(), Reaccion.TipoReaccion.DISLIKE);
-            } catch (UsuarioNotFoundException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-            refrescarDialog(c.getPublicacion());
+            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); }
+            refrescarDialog(dialog, c.getPublicacion());
         });
-
         acciones.add(like, dislike);
+
         layout.add(autor, texto, acciones);
 
         // Respuestas recursivas
         if (c.getRespuestas() != null) {
             for (Comentario r : c.getRespuestas()) {
-                VerticalLayout respuestaLayout = crearLayoutComentarioModal(r);
-                respuestaLayout.getStyle().set("margin-left", "20px");
-                layout.add(respuestaLayout);
+                layout.add(crearLayoutComentarioModal(r, dialog));
             }
         }
 
         return layout;
     }
 
-    // ----------------------------
     private int contarReacciones(Comentario c, Reaccion.TipoReaccion tipo) {
         return (int) c.getReacciones().stream().filter(r -> r.getTipo() == tipo).count();
     }
 
-    private void refrescarDialog(Publicacion publicacion) {
+    private void refrescarDialog(Dialog dialog, Publicacion publicacion) {
+        dialog.removeAll();
         mostrarDetallePublicacion(publicacion);
     }
 
-    // ----------------------------
     private void validarSesion() {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
