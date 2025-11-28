@@ -22,24 +22,32 @@ public class PerfilAcademicoService {
     UsuarioRepository usuarios;
 
     public PerfilAcademico obtenerPerfil(String login) throws UsuarioNotFoundException {
-        if (!usuarios.existsById(login)) {
-            throw new UsuarioNotFoundException("Usuario no existe");
-        }
-        return perfiles.findByUsuarioLogin(login);
-    }
 
-    public PerfilAcademico actualizarPerfil(String login, String carrera, String semestre, String habilidades)
-            throws UsuarioNotFoundException {
-
-        if (!usuarios.existsById(login)) {
-            throw new UsuarioNotFoundException("Usuario no existe");
-        }
+        Usuario u = usuarios.findById(login)
+            .orElseThrow(() -> new UsuarioNotFoundException("Usuario no existe"));
 
         PerfilAcademico perfil = perfiles.findByUsuarioLogin(login);
 
         if (perfil == null) {
             perfil = new PerfilAcademico();
-            perfil.setUsuario(usuarios.findById(login).get());
+            perfil.setUsuario(u);
+            perfiles.save(perfil);
+        }
+
+        return perfil;
+    }
+
+    public PerfilAcademico actualizarPerfil(String login, String carrera, String semestre, String habilidades)
+            throws UsuarioNotFoundException {
+
+        Usuario u = usuarios.findById(login)
+                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no existe"));
+
+        PerfilAcademico perfil = perfiles.findByUsuarioLogin(login);
+
+        if (perfil == null) {
+            perfil = new PerfilAcademico();
+            perfil.setUsuario(u);
         }
 
         perfil.setCarrera(carrera);

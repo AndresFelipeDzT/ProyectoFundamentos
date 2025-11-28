@@ -1,18 +1,17 @@
 package com.ingesoft.redsocial.ui;
 
-// Nuevas importaciones para estilo, icono y centrado
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.html.H3; // Cambiamos H1 por H3
-
 import com.ingesoft.redsocial.modelo.PerfilAcademico;
 import com.ingesoft.redsocial.servicios.PerfilAcademicoService;
 import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
 import com.ingesoft.redsocial.ui.servicio.SessionService;
+
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -27,9 +26,10 @@ public class PerfilView extends VerticalLayout {
 
     TextField carrera;
     TextField semestre;
-    TextField habilidades;
-    Button guardar;
+    TextArea habilidades;
+    TextField usuarioNombre;
 
+    Button guardar;
     PerfilAcademico perfil;
 
     public PerfilView(
@@ -42,61 +42,65 @@ public class PerfilView extends VerticalLayout {
         this.navegacion = navegacion;
         this.perfilService = perfilService;
 
-        UI.getCurrent().access(this::validarSesion);
+        validarSesion();
 
-        // ********** INICIO DE MODIFICACIONES DE ESTILO **********
-        
-        // 1. Aplicar gama de colores azul de fondo
         setSizeFull();
-        getStyle().set("background-color", "#E6F7FF"); // Azul claro
-        setAlignItems(Alignment.CENTER); // Centrar el contenido horizontalmente
-        setSpacing(true); // Agregar espacio entre componentes
+        getStyle().set("background-color", "#E6F7FF");
+        setAlignItems(Alignment.CENTER);
 
-        // 2. Encabezado con estilo azul
         H3 titulo = new H3("Mi Perfil Académico");
-        titulo.getStyle().set("color", "#007BFF"); // Color azul primario
+        titulo.getStyle().set("color", "#007BFF");
 
         add(navegacion, titulo);
-        
+
+        // Usuario NO editable
+        usuarioNombre = new TextField("Usuario");
+        usuarioNombre.setWidth("350px");
+        usuarioNombre.setReadOnly(true);
+
         carrera = new TextField("Carrera");
         carrera.setWidth("350px");
+
         semestre = new TextField("Semestre");
         semestre.setWidth("350px");
-        habilidades = new TextField("Habilidades principales");
+
+        habilidades = new TextArea("Habilidades principales");
         habilidades.setWidth("350px");
+        habilidades.setHeight("120px");
 
         cargarDatos();
 
-        // 3. Botón Guardar con estilo azul, grande y redondeado
-        guardar = new Button("Guardar Cambios");
-        guardar.addClickListener(e -> guardarPerfil());
-        guardar.addThemeVariants(
-            ButtonVariant.LUMO_PRIMARY,
-            ButtonVariant.LUMO_LARGE
-        );
+        guardar = new Button("Guardar cambios", e -> guardarPerfil());
+        guardar.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_LARGE);
         guardar.getStyle().set("border-radius", "10px");
         guardar.setWidth("350px");
 
-        add(carrera, semestre, habilidades, guardar);
-
-        // ********** FIN DE MODIFICACIONES DE ESTILO **********
+        add(usuarioNombre, carrera, semestre, habilidades, guardar);
     }
 
     private void cargarDatos() {
         String login = sessionService.getLoginEnSesion();
+        usuarioNombre.setValue(login);
+
         try {
             perfil = perfilService.obtenerPerfil(login);
-            if (perfil != null) {
-                carrera.setValue(perfil.getCarrera() != null ? perfil.getCarrera() : "");
-                semestre.setValue(perfil.getSemestre() != null ? perfil.getSemestre() : "");
-                habilidades.setValue(perfil.getHabilidades() != null ? perfil.getHabilidades() : "");
-            }
+
+            carrera.setValue(perfil.getCarrera() != null ? perfil.getCarrera() : "");
+            semestre.setValue(perfil.getSemestre() != null ? perfil.getSemestre() : "");
+            habilidades.setValue(perfil.getHabilidades() != null ? perfil.getHabilidades() : "");
+
         } catch (Exception e) {
             Notification.show("No hay perfil aún. Puedes crear uno.");
         }
     }
 
     private void guardarPerfil() {
+
+        if (carrera.isEmpty() || semestre.isEmpty()) {
+            Notification.show("Carrera y semestre no pueden estar vacíos");
+            return;
+        }
+
         try {
             perfilService.actualizarPerfil(
                 sessionService.getLoginEnSesion(),
@@ -104,7 +108,9 @@ public class PerfilView extends VerticalLayout {
                 semestre.getValue(),
                 habilidades.getValue()
             );
+
             Notification.show("Perfil actualizado correctamente");
+
         } catch (Exception e) {
             Notification.show("Error guardando perfil: " + e.getMessage());
         }
