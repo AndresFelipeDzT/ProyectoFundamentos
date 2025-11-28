@@ -1,10 +1,12 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ingesoft.redsocial.excepciones.ComentarioNotFoundException;
 import com.ingesoft.redsocial.excepciones.PublicacionNotFoundException;
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Comentario;
@@ -50,4 +52,14 @@ public class ComentarioService {
 
         comentarioRepository.save(comentario);
     }
+
+     @Transactional(readOnly = true)
+    public Comentario obtenerPorIdConRespuestas(Long id) throws ComentarioNotFoundException {
+    Comentario c = comentarioRepository.findById(id)
+                    .orElseThrow(() -> new ComentarioNotFoundException("Comentario no encontrado"));
+    // Inicializar respuestas para evitar LazyInitializationException
+    c.getRespuestas().size();
+    return c;
+}
+
 }
