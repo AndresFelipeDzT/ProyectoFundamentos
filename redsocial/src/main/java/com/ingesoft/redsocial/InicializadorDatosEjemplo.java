@@ -2,7 +2,7 @@ package com.ingesoft.redsocial;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.ingesoft.redsocial.modelo.*;
@@ -23,9 +23,6 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
     private final ParticipantesGrupoRepository participantesRepo;
     private final PublicacionRepository publicacionRepo;
     private final ComentarioRepository comentarioRepo;
-    
-     @Autowired
-    private PasswordEncoder passwordEncoder;
 
     public InicializadorDatosEjemplo(
             UsuarioRepository usuarioRepo,
@@ -44,35 +41,42 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
 
-      // == USUARIOS ==
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        // == USUARIOS ==
         Map<String, Usuario> usuarios = new HashMap<>();
 
         Usuario andres = new Usuario();
         andres.setLogin("andresdiaz5");
+        andres.setNombre("Andres Diaz");
         andres.setPassword(passwordEncoder.encode("andresdiaz5*"));
         usuarioRepo.save(andres);
         usuarios.put("andresdiaz5", andres);
 
         Usuario santiago = new Usuario();
         santiago.setLogin("rayosantiago");
+        santiago.setNombre("Santiago Rayo");
         santiago.setPassword(passwordEncoder.encode("rayosantiago3*"));
         usuarioRepo.save(santiago);
         usuarios.put("rayosantiago", santiago);
 
         Usuario pablo = new Usuario();
         pablo.setLogin("mottat");
+        pablo.setNombre("Pablo Motta");
         pablo.setPassword(passwordEncoder.encode("juanpablomotta!"));
         usuarioRepo.save(pablo);
         usuarios.put("mottat", pablo);
 
         Usuario ana = new Usuario();
         ana.setLogin("romerocana");
+        ana.setNombre("Ana Romero");
         ana.setPassword(passwordEncoder.encode("romero20*"));
         usuarioRepo.save(ana);
         usuarios.put("romerocana", ana);
 
         Usuario jaime = new Usuario();
         jaime.setLogin("jaimec20");
+        jaime.setNombre("Jaime Chavarriaga");
         jaime.setPassword(passwordEncoder.encode("jaime2005#"));
         usuarioRepo.save(jaime);
         usuarios.put("jaimec20", jaime);
@@ -92,7 +96,7 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
 
         grupos.put("Base de datos",
                 crearGrupo("Base de datos",
-                        "Grupo de básico estudio para las personas que se nos dificulta mas base de datos",
+                        "Grupo de básico estudio para las personas que se nos dificulta más base de datos",
                         usuarios.get("jaimec20")));
 
         grupos.put("Gestion e Innovación de TI",
@@ -113,14 +117,13 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
         unirParticipantes(grupos.get("Gestion e Innovación de TI"),
                 usuarios.get("andresdiaz5"), usuarios.get("rayosantiago"));
 
-       // == PUBLICACIONES ==
+        // == PUBLICACIONES ==
         Publicacion publicacionAndres = new Publicacion();
         publicacionAndres.setAutor(usuarios.get("andresdiaz5"));
         publicacionAndres.setContenido("Hola alguien tiene el parcial 3 de Base de datos");
         publicacionAndres.setFechaCreacion(LocalDateTime.now());
-        publicacionAndres.setRutaImagen(null); // opcional si no hay imagen
+        publicacionAndres.setRutaImagen(null);
         publicacionRepo.save(publicacionAndres);
-
 
         // == COMENTARIOS ==
         Comentario comentarioSantiago = new Comentario();
@@ -129,7 +132,6 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
         comentarioSantiago.setTexto("Yo lo tengo, escríbeme al +57 1234567890");
         comentarioSantiago.setFecha(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         comentarioRepo.save(comentarioSantiago);
-
 
         System.out.println("Datos de ejemplo cargados correctamente!");
     }
@@ -150,7 +152,6 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
 
     private void unirParticipantes(Grupo grupo, Usuario... usuarios) {
         for (Usuario u : usuarios) {
-            // Evita duplicados si ya existe
             if (!participantesRepo.existsByGrupoIdAndUsuarioLogin(grupo.getId(), u.getLogin())) {
                 ParticipantesGrupo p = new ParticipantesGrupo(u, grupo);
                 participantesRepo.save(p);
