@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+
 import lombok.Data;
 
 @Entity
@@ -17,17 +18,17 @@ public class Publicacion {
 
     @Id
     @GeneratedValue
-    Long id;
+    private Long id;
 
-    String contenido;
+    private String contenido;
 
-    LocalDateTime fechaCreacion;
+    private LocalDateTime fechaCreacion;
+
+    private String rutaArchivo; // NUEVO: ruta de archivo adjunto (imagen, PDF, etc.)
 
     @ManyToOne
-    Usuario autor;
+    private Usuario autor;
 
     @OneToMany(mappedBy = "publicacion")
-    List<Comentario> comentarios = new ArrayList<>();
-
+    private List<Comentario> comentarios = new ArrayList<>();
 }
-

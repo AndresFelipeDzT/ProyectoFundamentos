@@ -19,12 +19,12 @@ import jakarta.transaction.Transactional;
 public class PublicacionService {
 
     @Autowired
-    UsuarioRepository usuarios;
+    private UsuarioRepository usuarios;
 
     @Autowired
-    PublicacionRepository publicaciones;
+    private PublicacionRepository publicaciones;
 
-    public Publicacion crearPublicacion(String login, String contenido) throws UsuarioNotFoundException {
+    public Publicacion crearPublicacion(String login, String contenido, String rutaArchivo) throws UsuarioNotFoundException {
         if (!usuarios.existsById(login)) {
             throw new UsuarioNotFoundException("Usuario no existe");
         }
@@ -35,6 +35,7 @@ public class PublicacionService {
         p.setAutor(autor);
         p.setContenido(contenido);
         p.setFechaCreacion(LocalDateTime.now());
+        p.setRutaArchivo(rutaArchivo); // NUEVO: ruta del archivo
 
         return publicaciones.save(p);
     }
@@ -46,5 +47,4 @@ public class PublicacionService {
     public List<Publicacion> obtenerPorUsuario(String login) {
         return publicaciones.findByAutorLogin(login);
     }
-
 }
