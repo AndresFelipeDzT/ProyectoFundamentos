@@ -21,15 +21,16 @@ import jakarta.transaction.Transactional;
 public class ComentarioService {
 
     @Autowired
-    UsuarioRepository usuarios;
+    private UsuarioRepository usuarios;
 
     @Autowired
-    PublicacionRepository publicaciones;
+    private PublicacionRepository publicaciones;
 
     @Autowired
-    ComentarioRepository comentarios;
+    private ComentarioRepository comentarios;
 
-    public Comentario crearComentario(String login, Long idPublicacion, String texto)
+    // Crear comentario o respuesta
+    public Comentario crearComentario(String login, Long idPublicacion, String texto, Long idPadre)
             throws UsuarioNotFoundException {
 
         if (!usuarios.existsById(login)) {
@@ -45,10 +46,16 @@ public class ComentarioService {
         comentario.setTexto(texto);
         comentario.setFecha(LocalDateTime.now());
 
+        if (idPadre != null) {
+            Comentario padre = comentarios.findById(idPadre).orElseThrow();
+            comentario.setComentarioPadre(padre);
+        }
+
         return comentarios.save(comentario);
     }
 
+    // Obtener solo comentarios principales (padre=null)
     public List<Comentario> obtenerComentarios(Long idPublicacion) {
-        return comentarios.findByPublicacionIdOrderByFechaAsc(idPublicacion);
+        return comentarios.findByPublicacionIdAndComentarioPadreIsNullOrderByFechaAsc(idPublicacion);
     }
 }

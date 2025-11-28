@@ -4,12 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -21,14 +16,13 @@ public class Publicacion {
     private Long id;
 
     private String contenido;
-
     private LocalDateTime fechaCreacion;
 
-    private String rutaArchivo; // NUEVO: ruta de archivo adjunto (imagen, PDF, etc.)
+    private String rutaArchivo; // NUEVO: ruta de archivo adjunto
 
     @ManyToOne
     private Usuario autor;
 
-    @OneToMany(mappedBy = "publicacion")
+    @OneToMany(mappedBy = "publicacion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comentario> comentarios = new ArrayList<>();
 }

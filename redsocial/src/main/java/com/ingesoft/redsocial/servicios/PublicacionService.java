@@ -24,7 +24,10 @@ public class PublicacionService {
     @Autowired
     private PublicacionRepository publicaciones;
 
-    public Publicacion crearPublicacion(String login, String contenido, String rutaArchivo) throws UsuarioNotFoundException {
+    // Crear publicación con archivo opcional
+    public Publicacion crearPublicacion(String login, String contenido, String rutaArchivo) 
+            throws UsuarioNotFoundException {
+
         if (!usuarios.existsById(login)) {
             throw new UsuarioNotFoundException("Usuario no existe");
         }
@@ -35,7 +38,7 @@ public class PublicacionService {
         p.setAutor(autor);
         p.setContenido(contenido);
         p.setFechaCreacion(LocalDateTime.now());
-        p.setRutaArchivo(rutaArchivo); // NUEVO: ruta del archivo
+        p.setRutaArchivo(rutaArchivo);
 
         return publicaciones.save(p);
     }

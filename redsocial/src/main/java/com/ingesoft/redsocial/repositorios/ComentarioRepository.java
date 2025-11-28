@@ -9,7 +9,5 @@ import com.ingesoft.redsocial.modelo.Comentario;
 
 @Repository
 public interface ComentarioRepository extends JpaRepository<Comentario, Long> {
-
-    List<Comentario> findByPublicacionIdOrderByFechaAsc(Long publicacionId);
-
+    List<Comentario> findByPublicacionIdAndComentarioPadreIsNullOrderByFechaAsc(Long publicacionId);
 }

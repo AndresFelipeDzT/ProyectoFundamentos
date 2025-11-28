@@ -1,11 +1,10 @@
 package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -14,15 +13,24 @@ public class Comentario {
 
     @Id
     @GeneratedValue
-    Long id;
+    private Long id;
 
-    String texto;
+    private String texto;
 
-    LocalDateTime fecha;
-
-    @ManyToOne
-    Usuario autor;
+    private LocalDateTime fecha;
 
     @ManyToOne
-    Publicacion publicacion;
+    private Usuario autor;
+
+    @ManyToOne
+    private Publicacion publicacion;
+
+    @ManyToOne
+    private Comentario comentarioPadre; // Para respuestas
+
+    @OneToMany(mappedBy = "comentario", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Reaccion> reacciones = new ArrayList<>();
+
+    @OneToMany(mappedBy = "comentarioPadre", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comentario> respuestas = new ArrayList<>();
 }
