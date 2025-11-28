@@ -2,7 +2,11 @@ package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 
@@ -23,8 +27,9 @@ public class Publicacion {
     @JoinColumn(name = "autor_id")
     private Usuario autor;
 
-    @OneToMany(mappedBy = "publicacion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Comentario> comentarios = new ArrayList<>();
+    @OneToMany(mappedBy = "publicacion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore  // Evita ciclos al serializar
+    private Set<Comentario> comentarios = new HashSet<>();
 
     // Getters y Setters
 
@@ -68,11 +73,11 @@ public class Publicacion {
         this.autor = autor;
     }
 
-    public List<Comentario> getComentarios() {
+    public Set<Comentario> getComentarios() {
         return comentarios;
     }
 
-    public void setComentarios(List<Comentario> comentarios) {
+    public void setComentarios(Set<Comentario> comentarios) {
         this.comentarios = comentarios;
     }
 }

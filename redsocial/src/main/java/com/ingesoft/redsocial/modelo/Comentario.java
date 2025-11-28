@@ -1,7 +1,11 @@
 package com.ingesoft.redsocial.modelo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 
@@ -28,8 +32,9 @@ public class Comentario {
     @JoinColumn(name = "respuesta_padre_id")
     private Comentario respuestaPadre;
 
-    @OneToMany(mappedBy = "respuestaPadre", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Comentario> respuestas = new ArrayList<>();
+    @OneToMany(mappedBy = "padre", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<Comentario> respuestas = new HashSet<>();
 
     // Getters y Setters
 
@@ -81,11 +86,11 @@ public class Comentario {
         this.respuestaPadre = respuestaPadre;
     }
 
-    public List<Comentario> getRespuestas() {
+    public Set<Comentario> getRespuestas() {
         return respuestas;
     }
 
-    public void setRespuestas(List<Comentario> respuestas) {
+    public void setRespuestas(Set<Comentario> respuestas) {
         this.respuestas = respuestas;
     }
 }

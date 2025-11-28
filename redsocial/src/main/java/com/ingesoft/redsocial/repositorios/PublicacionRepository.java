@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.ingesoft.redsocial.modelo.Publicacion;
@@ -40,4 +41,11 @@ public interface PublicacionRepository extends JpaRepository<Publicacion, Long> 
         "comentarios.respuestas.autor"
     })
     List<Publicacion> findByIdOrderByFechaCreacionDesc(Long id);
+
+    @Query("SELECT DISTINCT p FROM Publicacion p " +
+       "LEFT JOIN FETCH p.comentarios c " +
+       "LEFT JOIN FETCH c.autor " +
+       "WHERE p.id = :id")
+Optional<Publicacion> findByIdWithComentarios(Long id);
+
 }
