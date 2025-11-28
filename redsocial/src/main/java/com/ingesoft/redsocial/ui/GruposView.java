@@ -144,56 +144,84 @@ public class GruposView extends VerticalLayout {
     }
 
     private void abrirDialogoUnirse(Grupo grupo) {
-
         Dialog dialog = new Dialog();
-        dialog.setWidth("700px");
+        dialog.setWidth("520px");
 
         H3 titulo = new H3("Grupo: " + grupo.getNombreGrupo());
 
-        TextField desc = new TextField("Descripción");
-        desc.setValue(grupo.getDescripcion());
-        desc.setReadOnly(true);
-        desc.setWidthFull();
-        desc.setHeight("140px");
-        desc.getStyle().set("white-space", "pre-wrap");
+        // Caja azul para la descripción
+        Paragraph desc = new Paragraph(grupo.getDescripcion());
+        desc.getStyle()
+                .set("background-color", "#D6ECFF")   // azul suave
+                .set("padding", "12px")
+                .set("border-radius", "8px")
+                .set("width", "100%")
+                .set("white-space", "pre-wrap");
 
-        // lista participantes
-        MultiSelectListBox<String> lista = new MultiSelectListBox<>();
-        lista.setItems(grupoService.obtenerNombresParticipantes(grupo.getId()));
-        lista.setHeight("280px");
-        lista.getStyle().set("border", "1px solid #ccc");
+        // Lista con iconos + scroll
+        VerticalLayout listaContainer = new VerticalLayout();
+        listaContainer.setPadding(false);
+        listaContainer.setSpacing(false);
+        listaContainer.setWidth("100%");
+        listaContainer.setHeight("200px");        // altura
+        listaContainer.getStyle()
+                .set("overflow-y", "auto")        // scroll vertical
+                .set("border", "1px solid #ccc")
+                .set("border-radius", "6px")
+                .set("padding", "6px");
 
-        VerticalLayout left = new VerticalLayout(titulo, desc);
-        left.setWidth("350px");
+        try {
+            List<String> participantes = grupoService.obtenerNombresParticipantes(grupo.getId());
+            listaContainer.removeAll();
 
-        VerticalLayout right = new VerticalLayout(
-                new H3("Participantes"),
-                lista
-        );
-        right.setWidth("250px");
+            for (String nombre : participantes) {
+                HorizontalLayout fila = new HorizontalLayout(
+                        VaadinIcon.USER.create(),   // ícono
+                        new Paragraph(nombre)
+                );
+                fila.setAlignItems(Alignment.CENTER);
+                fila.setSpacing(true);
+                listaContainer.add(fila);
+            }
 
-        HorizontalLayout main = new HorizontalLayout(left, right);
-        main.setWidthFull();
+        } catch (Exception ex) {
+            listaContainer.add(new Paragraph("No se pudieron cargar los participantes."));
+        }
 
+        // Botón
         Button btnUnirse = new Button("Unirme", VaadinIcon.PLUS.create(), ev -> {
+            String login = session.getLoginEnSesion();
             try {
-                grupoService.unirUsuarioAGrupo(session.getLoginEnSesion(), grupo.getId());
-                Notification.show("Te uniste al grupo");
+                grupoService.unirUsuarioAGrupo(login, grupo.getId());
+                Notification.show("Te uniste al grupo " + grupo.getNombreGrupo());
 
-                lista.setItems(grupoService.obtenerNombresParticipantes(grupo.getId()));
-                cargar();
+                // refrescar participantes
+                listaContainer.removeAll();
+                grupoService.obtenerNombresParticipantes(grupo.getId()).forEach(nombre -> {
+                    HorizontalLayout fila = new HorizontalLayout(
+                            VaadinIcon.USER.create(),
+                            new Paragraph(nombre)
+                    );
+                    fila.setAlignItems(Alignment.CENTER);
+                    listaContainer.add(fila);
+                });
+
+                cargar(); // refrescar tabla principal
+
             } catch (Exception ex) {
                 Notification.show(ex.getMessage());
             }
         });
         btnUnirse.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        VerticalLayout finalLayout = new VerticalLayout(main, btnUnirse);
-        finalLayout.setAlignItems(Alignment.CENTER);
+        // Contenedor final
+        VerticalLayout contenido = new VerticalLayout(titulo, desc, listaContainer, btnUnirse);
+        contenido.setPadding(true);
 
-        dialog.add(finalLayout);
+        dialog.add(contenido);
         dialog.open();
     }
+
 
     private void validarSesion() {
         if (session.getLoginEnSesion() == null) {
