@@ -50,4 +50,8 @@ public class PublicacionService {
     public List<Publicacion> obtenerPorUsuario(String login) {
         return publicaciones.findByAutorLogin(login);
     }
+
+     public Publicacion obtenerPorIdConComentarios(Long id) {
+        return publicaciones.findByIdWithComentariosYReacciones(id);
+    }
 }

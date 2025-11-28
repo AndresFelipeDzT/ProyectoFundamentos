@@ -10,13 +10,12 @@ import java.util.List;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
@@ -56,15 +55,12 @@ public class PublicacionesView extends VerticalLayout {
 
     private TextArea areaPublicacion;
     private Grid<Publicacion> tabla;
-    private VerticalLayout comentariosLayout = new VerticalLayout();
-
-    private TextArea areaComentario; // Para comentar en la publicación seleccionada
-    private Button enviarComentario;
 
     private FileBuffer buffer = new FileBuffer();
     private Upload uploadComponent = new Upload(buffer);
 
     private static final String UPLOAD_DIR = "uploads" + File.separator;
+
     private Publicacion publicacionActual;
 
     public PublicacionesView(SessionService sessionService,
@@ -83,7 +79,7 @@ public class PublicacionesView extends VerticalLayout {
 
         add(navegacion);
 
-        // Área nueva publicación
+        // Área de nueva publicación
         areaPublicacion = new TextArea("Nueva publicación");
         areaPublicacion.setWidth("80%");
 
@@ -113,34 +109,27 @@ public class PublicacionesView extends VerticalLayout {
              .setHeader("Fecha");
         tabla.setWidth("80%");
 
-        // Selección de publicación
+        // Selección de publicación -> abrir modal
         tabla.asSingleSelect().addValueChangeListener(e -> {
-            publicacionActual = e.getValue();
-            refrescarComentarios();
+            Publicacion seleccionada = e.getValue();
+            if (seleccionada != null) {
+                mostrarDetallePublicacion(seleccionada);
+            }
         });
 
-        // Área para comentar en la publicación seleccionada
-        areaComentario = new TextArea("Escribe un comentario...");
-        areaComentario.setWidth("80%");
-        enviarComentario = new Button("Comentar", e -> comentarPublicacion());
-        HorizontalLayout comentarioControls = new HorizontalLayout(areaComentario, enviarComentario);
-        comentarioControls.setWidth("80%");
-        comentarioControls.setAlignItems(Alignment.BASELINE);
-
         // Layout principal
-        add(areaPublicacion, postControls, tabla, comentarioControls, comentariosLayout);
+        add(areaPublicacion, postControls, tabla);
 
         cargarFeed();
     }
 
-    // ----------------------------------------
-    // Publicar nueva publicación
+    // ----------------------------
     private void publicar() {
         String contenido = areaPublicacion.getValue();
         String login = sessionService.getLoginEnSesion();
         String rutaImagen = null;
 
-        if ((contenido == null || contenido.isEmpty()) && buffer.getFileData() == null) {
+        if (contenido.isEmpty() && buffer.getFileData() == null) {
             Notification.show("Debes escribir algo o seleccionar una foto.");
             return;
         }
@@ -159,7 +148,7 @@ public class PublicacionesView extends VerticalLayout {
                 }
             }
 
-            publicacionService.crearPublicacion(login, contenido, rutaImagen); // Se guarda ruta de imagen
+            publicacionService.crearPublicacion(login, contenido, rutaImagen);
 
             areaPublicacion.clear();
             buffer = new FileBuffer();
@@ -171,53 +160,75 @@ public class PublicacionesView extends VerticalLayout {
         }
     }
 
-    // ----------------------------------------
-    // Comentar en la publicación seleccionada
-    private void comentarPublicacion() {
-        String texto = areaComentario.getValue();
-        if (texto == null || texto.isEmpty() || publicacionActual == null) {
-            Notification.show("Debes escribir algo para comentar.");
-            return;
-        }
-
-        try {
-            comentarioService.crearComentario(
-                    sessionService.getLoginEnSesion(),
-                    publicacionActual.getId(),
-                    texto,
-                    null // comentario padre null
-            );
-            areaComentario.clear();
-            refrescarComentarios();
-        } catch (Exception e) {
-            Notification.show("Error al comentar: " + e.getMessage());
-        }
-    }
-
-    // ----------------------------------------
-    // Cargar todas las publicaciones
+    // ----------------------------
     private void cargarFeed() {
         List<Publicacion> publicaciones = publicacionService.obtenerFeed();
         tabla.setItems(publicaciones);
     }
 
-    // ----------------------------------------
-    // Refrescar comentarios de la publicación actual
-    private void refrescarComentarios() {
-        comentariosLayout.removeAll();
-        if (publicacionActual == null) return;
+    // ----------------------------
+    private void mostrarDetallePublicacion(Publicacion publicacion) {
+        // Cargar publicación completa con comentarios y reacciones
+        Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
 
-        List<Comentario> comentarios = comentarioService.obtenerComentarios(publicacionActual.getId());
-        for (Comentario c : comentarios) {
-            comentariosLayout.add(crearLayoutComentario(c));
+        Dialog dialog = new Dialog();
+        dialog.setWidth("600px");
+        dialog.setHeight("80%");
+        dialog.getElement().getStyle().set("background-color", "#E6F7FF");
+
+        VerticalLayout contenido = new VerticalLayout();
+        contenido.setWidthFull();
+        contenido.setSpacing(true);
+
+        // Información de la publicación
+        Label autor = new Label(pubCompleta.getAutor().getNombre() + " - " +
+                pubCompleta.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        Label texto = new Label(pubCompleta.getContenido());
+        contenido.add(autor, texto);
+
+        // Área para comentar
+        TextArea areaComentario = new TextArea("Escribe un comentario...");
+        areaComentario.setWidthFull();
+        Button enviarComentario = new Button("Comentar", e -> {
+            String textoComentario = areaComentario.getValue();
+            if (textoComentario != null && !textoComentario.isEmpty()) {
+                try {
+                    comentarioService.crearComentario(
+                            sessionService.getLoginEnSesion(),
+                            pubCompleta.getId(),
+                            textoComentario,
+                            null
+                    );
+                } catch (UsuarioNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                areaComentario.clear();
+                dialog.removeAll();
+                mostrarDetallePublicacion(publicacion); // recarga todo
+            }
+        });
+        HorizontalLayout comentarioControls = new HorizontalLayout(areaComentario, enviarComentario);
+        comentarioControls.setWidthFull();
+
+        contenido.add(comentarioControls);
+
+        // Mostrar comentarios
+        VerticalLayout comentariosModal = new VerticalLayout();
+        comentariosModal.setWidthFull();
+        for (Comentario c : pubCompleta.getComentarios()) {
+            comentariosModal.add(crearLayoutComentarioModal(c));
         }
+        contenido.add(comentariosModal);
+
+        dialog.add(contenido);
+        dialog.open();
     }
 
-    // ----------------------------------------
-    // Crear layout de comentario + respuestas recursivas + reacciones
-    private VerticalLayout crearLayoutComentario(Comentario c) {
+    // ----------------------------
+    private VerticalLayout crearLayoutComentarioModal(Comentario c) {
         VerticalLayout layout = new VerticalLayout();
-        layout.setWidth("100%");
+        layout.setWidthFull();
         layout.getStyle().set("background-color", "#F0F8FF")
                           .set("padding", "10px")
                           .set("border-radius", "10px");
@@ -233,7 +244,7 @@ public class PublicacionesView extends VerticalLayout {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
-            refrescarComentarios();
+            refrescarDialog(c.getPublicacion());
         });
         Button dislike = new Button("👎 " + contarReacciones(c, Reaccion.TipoReaccion.DISLIKE), e -> {
             try {
@@ -242,17 +253,16 @@ public class PublicacionesView extends VerticalLayout {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
-            refrescarComentarios();
+            refrescarDialog(c.getPublicacion());
         });
-        Button responder = new Button("Responder", e -> mostrarTextAreaRespuesta(c));
 
-        acciones.add(like, dislike, responder);
+        acciones.add(like, dislike);
         layout.add(autor, texto, acciones);
 
         // Respuestas recursivas
         if (c.getRespuestas() != null) {
             for (Comentario r : c.getRespuestas()) {
-                VerticalLayout respuestaLayout = crearLayoutComentario(r);
+                VerticalLayout respuestaLayout = crearLayoutComentarioModal(r);
                 respuestaLayout.getStyle().set("margin-left", "20px");
                 layout.add(respuestaLayout);
             }
@@ -261,37 +271,16 @@ public class PublicacionesView extends VerticalLayout {
         return layout;
     }
 
-    // ----------------------------------------
+    // ----------------------------
     private int contarReacciones(Comentario c, Reaccion.TipoReaccion tipo) {
-        if (c.getReacciones() == null) return 0;
         return (int) c.getReacciones().stream().filter(r -> r.getTipo() == tipo).count();
     }
 
-    // ----------------------------------------
-    private void mostrarTextAreaRespuesta(Comentario padre) {
-        TextArea respuestaArea = new TextArea("Responder a " + padre.getAutor().getNombre());
-        Button enviar = new Button("Enviar", e -> {
-            String texto = respuestaArea.getValue();
-            if (texto != null && !texto.isEmpty()) {
-                try {
-                    comentarioService.crearComentario(
-                            sessionService.getLoginEnSesion(),
-                            padre.getPublicacion().getId(),
-                            texto,
-                            padre.getId() // comentario padre
-                    );
-                    refrescarComentarios();
-                } catch (Exception ex) {
-                    Notification.show("Error al responder: " + ex.getMessage());
-                }
-            }
-        });
-        VerticalLayout contenedor = new VerticalLayout(respuestaArea, enviar);
-        contenedor.setWidth("80%");
-        comentariosLayout.add(contenedor);
+    private void refrescarDialog(Publicacion publicacion) {
+        mostrarDetallePublicacion(publicacion);
     }
 
-    // ----------------------------------------
+    // ----------------------------
     private void validarSesion() {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
