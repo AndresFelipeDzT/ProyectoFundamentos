@@ -1,27 +1,39 @@
 package com.ingesoft.redsocial.repositorios;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import com.ingesoft.redsocial.modelo.Publicacion;
 
-@Repository
 public interface PublicacionRepository extends JpaRepository<Publicacion, Long> {
 
-    List<Publicacion> findByAutorLogin(String login);
+    // Carga todas las publicaciones con comentarios, autores y reacciones
+    @Query("SELECT DISTINCT p FROM Publicacion p " +
+           "LEFT JOIN FETCH p.comentarios c " +
+           "LEFT JOIN FETCH p.autor a " +
+           "LEFT JOIN FETCH c.autor " +
+           "LEFT JOIN FETCH c.reacciones")
+    List<Publicacion> findAllWithComentariosYAutor();
 
-    List<Publicacion> findAllByOrderByFechaCreacionDesc();
-
+    // Carga una publicación específica con todos los comentarios y reacciones
     @Query("SELECT p FROM Publicacion p " +
-        "LEFT JOIN FETCH p.comentarios c " +
-        "LEFT JOIN FETCH c.reacciones " +
-        "LEFT JOIN FETCH c.respuestas " +
-        "WHERE p.id = :id")
-    Publicacion findByIdConComentariosYReacciones(@Param("id") Long id);
+           "LEFT JOIN FETCH p.comentarios c " +
+           "LEFT JOIN FETCH p.autor a " +
+           "LEFT JOIN FETCH c.autor " +
+           "LEFT JOIN FETCH c.reacciones " +
+           "WHERE p.id = :id")
+    Optional<Publicacion> findByIdWithComentarios(Long id);
 
+    Optional<Publicacion> findById(Long id);
+
+     @Query("SELECT DISTINCT p FROM Publicacion p " +
+           "LEFT JOIN FETCH p.comentarios c " +
+           "LEFT JOIN FETCH c.reacciones " +
+           "LEFT JOIN FETCH c.respuestas " +
+           "LEFT JOIN FETCH p.autor " +
+           "ORDER BY p.fechaCreacion DESC")
+    List<Publicacion> findAllWithComentariosYReacciones();
 }
-

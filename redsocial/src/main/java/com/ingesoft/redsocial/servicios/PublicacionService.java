@@ -3,36 +3,42 @@ package com.ingesoft.redsocial.servicios;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Publicacion;
 import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.repositorios.PublicacionRepository;
 import com.ingesoft.redsocial.repositorios.UsuarioRepository;
-import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
-
-import jakarta.transaction.Transactional;
 
 @Service
-@Transactional
 public class PublicacionService {
 
-    @Autowired
-    private UsuarioRepository usuarios;
+    private final PublicacionRepository publicacionRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private PublicacionRepository publicaciones;
+    public PublicacionService(PublicacionRepository publicacionRepository,
+                              UsuarioRepository usuarioRepository) {
+        this.publicacionRepository = publicacionRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
-    // Crear publicación con archivo opcional
-    public Publicacion crearPublicacion(String login, String contenido, String rutaArchivo) 
-            throws UsuarioNotFoundException {
+    @Transactional(readOnly = true)
+    public List<Publicacion> obtenerFeed() {
+        return publicacionRepository.findAllWithComentariosYAutor();
+    }
 
-        if (!usuarios.existsById(login)) {
-            throw new UsuarioNotFoundException("Usuario no existe");
-        }
+    @Transactional(readOnly = true)
+    public Publicacion obtenerPorIdConComentarios(Long id) {
+        return publicacionRepository.findByIdWithComentarios(id)
+                .orElseThrow(() -> new RuntimeException("Publicación no encontrada"));
+    }
 
-        Usuario autor = usuarios.findById(login).get();
+    @Transactional
+    public void crearPublicacion(String loginUsuario, String contenido, String rutaArchivo) throws UsuarioNotFoundException {
+        Usuario autor = usuarioRepository.findByLogin(loginUsuario)
+                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
         Publicacion p = new Publicacion();
         p.setAutor(autor);
@@ -40,28 +46,10 @@ public class PublicacionService {
         p.setFechaCreacion(LocalDateTime.now());
         p.setRutaArchivo(rutaArchivo);
 
-        return publicaciones.save(p);
+        publicacionRepository.save(p);
     }
-
-    public List<Publicacion> obtenerFeed() {
-        return publicaciones.findAllByOrderByFechaCreacionDesc();
-    }
-
-    public List<Publicacion> obtenerPorUsuario(String login) {
-        return publicaciones.findByAutorLogin(login);
-    }
-
-    @Transactional
-    public Publicacion obtenerPorIdConComentarios(Long id) {
-        Publicacion pub = publicaciones.findById(id)
-        .orElseThrow(() -> new RuntimeException("No se encontró la publicación"));
-
-        // Forzar carga de comentarios y sus relaciones
-        pub.getComentarios().forEach(c -> {
-            c.getReacciones().size();
-            c.getRespuestas().size();
-        });
-
-        return pub;
+    
+    public List<Publicacion> obtenerFeedConComentariosYReacciones() {
+        return publicacionRepository.findAllWithComentariosYReacciones();
     }
 }

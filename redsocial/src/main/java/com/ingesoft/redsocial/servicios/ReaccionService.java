@@ -1,47 +1,48 @@
 package com.ingesoft.redsocial.servicios;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Comentario;
 import com.ingesoft.redsocial.modelo.Reaccion;
-import com.ingesoft.redsocial.modelo.Reaccion.TipoReaccion;
 import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.repositorios.ComentarioRepository;
 import com.ingesoft.redsocial.repositorios.ReaccionRepository;
 import com.ingesoft.redsocial.repositorios.UsuarioRepository;
-import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
-
-import jakarta.transaction.Transactional;
 
 @Service
-@Transactional
 public class ReaccionService {
 
-    @Autowired
-    private UsuarioRepository usuarios;
+    private final ReaccionRepository reaccionRepository;
+    private final ComentarioRepository comentarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    @Autowired
-    private ComentarioRepository comentarios;
+    public ReaccionService(ReaccionRepository reaccionRepository,
+                           ComentarioRepository comentarioRepository,
+                           UsuarioRepository usuarioRepository) {
+        this.reaccionRepository = reaccionRepository;
+        this.comentarioRepository = comentarioRepository;
+        this.usuarioRepository = usuarioRepository;
+    }
 
-    @Autowired
-    private ReaccionRepository reacciones;
+    @Transactional
+    public void reaccionar(String loginUsuario, Long comentarioId, Reaccion.TipoReaccion tipo)
+            throws UsuarioNotFoundException {
+        Usuario autor = usuarioRepository.findByLogin(loginUsuario)
+                .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
-    public Reaccion reaccionar(String login, Long comentarioId, TipoReaccion tipo) throws UsuarioNotFoundException {
+        Comentario comentario = comentarioRepository.findById(comentarioId)
+                .orElseThrow(() -> new RuntimeException("Comentario no encontrado"));
 
-        if (!usuarios.existsById(login)) throw new UsuarioNotFoundException("Usuario no existe");
+        // Si ya reaccionó, actualizar
+        Reaccion reaccion = reaccionRepository.findByComentarioAndAutor(comentario, autor)
+                .orElse(new Reaccion());
 
-        Usuario usuario = usuarios.findById(login).get();
-        Comentario comentario = comentarios.findById(comentarioId).orElseThrow();
-
-        boolean yaReacciono = reacciones.existsByComentarioIdAndUsuarioLogin(comentarioId, login);
-        if (yaReacciono) return null; // evita duplicados
-
-        Reaccion reaccion = new Reaccion();
-        reaccion.setUsuario(usuario);
         reaccion.setComentario(comentario);
+        reaccion.setAutor(autor);
         reaccion.setTipo(tipo);
 
-        return reacciones.save(reaccion);
+        reaccionRepository.save(reaccion);
     }
 }

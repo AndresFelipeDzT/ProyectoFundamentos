@@ -1,3 +1,4 @@
+// ---------------- PublicacionesView.java ----------------
 package com.ingesoft.redsocial.ui;
 
 import java.io.File;
@@ -24,6 +25,7 @@ import com.vaadin.flow.router.Route;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.ingesoft.redsocial.excepciones.PublicacionNotFoundException;
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Comentario;
 import com.ingesoft.redsocial.modelo.Publicacion;
@@ -102,7 +104,6 @@ public class PublicacionesView extends VerticalLayout {
         tabla.addColumn(p -> p.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
              .setHeader("Fecha").setAutoWidth(true);
 
-        // Botón Ver / Comentar
         tabla.addComponentColumn(p -> {
             Button ver = new Button("Ver / Comentar", e -> abrirDialogPublicacion(p));
             ver.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -155,13 +156,12 @@ public class PublicacionesView extends VerticalLayout {
 
     // ---------------- Cargar feed ----------------
     private void cargarFeed() {
-        List<Publicacion> publicaciones = publicacionService.obtenerFeed();
+        List<Publicacion> publicaciones = publicacionService.obtenerFeedConComentariosYReacciones();
         tabla.setItems(publicaciones);
     }
 
     // ---------------- Abrir dialog de publicación ----------------
     private void abrirDialogPublicacion(Publicacion publicacion) {
-        // Cargar publicación completa con comentarios y reacciones
         Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
 
         Dialog dialog = new Dialog();
@@ -173,13 +173,11 @@ public class PublicacionesView extends VerticalLayout {
         contenido.setWidthFull();
         contenido.setSpacing(true);
 
-        // Info publicación
         Label autor = new Label(pubCompleta.getAutor().getNombre() + " - " +
                 pubCompleta.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         Label texto = new Label(pubCompleta.getContenido());
         contenido.add(autor, texto);
 
-        // Área para comentar
         TextArea areaComentario = new TextArea("Escribe un comentario...");
         areaComentario.setWidthFull();
         Button enviarComentario = new Button("Comentar", e -> {
@@ -194,17 +192,19 @@ public class PublicacionesView extends VerticalLayout {
                     );
                 } catch (UsuarioNotFoundException ex) {
                     ex.printStackTrace();
+                } catch (PublicacionNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
                 }
                 areaComentario.clear();
                 dialog.removeAll();
-                abrirDialogPublicacion(publicacion); // recarga comentarios
+                abrirDialogPublicacion(publicacion);
             }
         });
         HorizontalLayout comentarioControls = new HorizontalLayout(areaComentario, enviarComentario);
         comentarioControls.setWidthFull();
         contenido.add(comentarioControls);
 
-        // Comentarios
         VerticalLayout comentariosModal = new VerticalLayout();
         comentariosModal.setWidthFull();
         for (Comentario c : pubCompleta.getComentarios()) {
@@ -248,7 +248,6 @@ public class PublicacionesView extends VerticalLayout {
         acciones.add(like, dislike);
         layout.add(autor, texto, acciones);
 
-        // Respuestas recursivas
         if (c.getRespuestas() != null) {
             for (Comentario r : c.getRespuestas()) {
                 VerticalLayout respuestaLayout = crearLayoutComentarioModal(r);
@@ -260,12 +259,10 @@ public class PublicacionesView extends VerticalLayout {
         return layout;
     }
 
-    // ---------------- Contar reacciones ----------------
     private int contarReacciones(Comentario c, Reaccion.TipoReaccion tipo) {
         return (int) c.getReacciones().stream().filter(r -> r.getTipo() == tipo).count();
     }
 
-    // ---------------- Validar sesión ----------------
     private void validarSesion() {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");

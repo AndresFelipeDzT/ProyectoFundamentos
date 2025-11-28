@@ -1,11 +1,14 @@
 package com.ingesoft.redsocial.repositorios;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import com.ingesoft.redsocial.modelo.Reaccion;
+import com.ingesoft.redsocial.modelo.Comentario;
+import com.ingesoft.redsocial.modelo.Usuario;
 
-@Repository
 public interface ReaccionRepository extends JpaRepository<Reaccion, Long> {
-    boolean existsByComentarioIdAndUsuarioLogin(Long comentarioId, String login);
+
+    Optional<Reaccion> findByComentarioAndAutor(Comentario comentario, Usuario autor);
 }
