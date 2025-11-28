@@ -18,11 +18,11 @@ import com.vaadin.flow.component.tabs.TabSheet;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.server.auth.AnonymousAllowed;
+import jakarta.annotation.security.PermitAll;
 
 @Route(value = "amigos")
 @PageTitle("Amigos")
-@AnonymousAllowed
+@PermitAll
 public class AmigosView extends VerticalLayout {
 
     // == Servicios
@@ -51,7 +51,7 @@ public class AmigosView extends VerticalLayout {
         this.usuarioService = usuarioService;
         this.solicitudAmistadService = solicitudAmistadService;
         this.navegacion = navegacion;
-        
+
         // Estilo general
         setSizeFull();
         getStyle().set("background-color", "#E6F7FF");
