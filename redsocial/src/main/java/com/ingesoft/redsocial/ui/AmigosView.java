@@ -1,78 +1,65 @@
 package com.ingesoft.redsocial.ui;
 
 import com.ingesoft.redsocial.modelo.Usuario;
-import com.ingesoft.redsocial.repositorios.UsuarioRepository;
+import com.ingesoft.redsocial.ui.servicio.SessionService;
 import com.ingesoft.redsocial.servicios.UsuarioService;
+import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.PageTitle;
+import com.vaadin.flow.component.notification.Notification;
 
 @Route("amigos")
 @PageTitle("Amigos")
 public class AmigosView extends VerticalLayout {
 
-    private final UsuarioService usuarioService;
-    private final UsuarioRepository usuarioRepository;
+    SessionService sessionService;
+    NavegacionComponent navegacion;
+    UsuarioService usuarioService;
+    Usuario usuario;
 
-    private Usuario usuarioActual;
+    public AmigosView(SessionService sessionService,
+                      NavegacionComponent navegacion,
+                      UsuarioService usuarioService) {
 
-    public AmigosView(UsuarioService usuarioService, UsuarioRepository usuarioRepository) {
+        this.sessionService = sessionService;
+        this.navegacion = navegacion;
         this.usuarioService = usuarioService;
-        this.usuarioRepository = usuarioRepository;
 
         setSizeFull();
-        setSpacing(true);
         setPadding(true);
+        setSpacing(true);
 
-        add(new H1("Amigos"));
+        add(navegacion);
+        add(new H1("Mis Amigos"));
+
+        // ❌ Ya NO validamos sesión aquí (se hacía con UI.access)
+        //    Ahora se hace en onAttach()
     }
 
-    /**
-     * VALIDACIÓN DE SESIÓN — se ejecuta cuando la vista ya existe en la UI.
-     * ESTA es la forma correcta. Nada de access(), nada en constructor.
-     */
     @Override
     protected void onAttach(AttachEvent attachEvent) {
-        String login = (String) UI.getCurrent().getSession().getAttribute("login");
+
+        String login = sessionService.getLoginEnSesion();
 
         if (login == null) {
-            Notification.show("Debes iniciar sesión para acceder a esta vista");
+            Notification.show("Debes iniciar sesión primero");
             UI.getCurrent().navigate("login");
             return;
         }
 
         try {
-            usuarioActual = usuarioService.obtenerPorLogin(login);
+            usuario = usuarioService.obtenerPorLogin(login);
         } catch (Exception e) {
             Notification.show("Error cargando usuario: " + e.getMessage());
             UI.getCurrent().navigate("login");
             return;
         }
 
-        // Después de validar sesión, puedes cargar todo lo demás
-        cargarContenido();
-    }
-
-    /**
-     * Aquí va todo lo que la vista muestra después de validar sesión
-     */
-    private void cargarContenido() {
-
-        removeAll(); // Limpia el layout para volver a construirlo
-
-        add(new H1("Amigos de " + usuarioActual.getNombre()));
-
-        Button btnBuscar = new Button("Buscar personas", e ->
-                UI.getCurrent().navigate("buscar-persona")
-        );
-
-        add(btnBuscar);
-
-        // TODO: añadir más cosas de la vista si lo necesitas
+        // Si quieres cargar contenido dependiendo del usuario, lo haces aquí:
+        // cargarAmigos();
     }
 }
