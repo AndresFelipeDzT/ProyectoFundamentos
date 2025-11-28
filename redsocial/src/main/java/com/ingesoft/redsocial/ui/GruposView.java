@@ -1,112 +1,124 @@
 package com.ingesoft.redsocial.ui;
 
 import com.ingesoft.redsocial.modelo.Grupo;
+import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.servicios.GrupoService;
+import com.ingesoft.redsocial.ui.servicio.SessionService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.listbox.MultiSelectListBox;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
 
 @Route("grupos")
 public class GruposView extends VerticalLayout {
 
-    @Autowired
-    private GrupoService grupoService;
+    private final GrupoService grupoService;
+    private final SessionService session;
 
-    private Grid<Grupo> tabla = new Grid<>(Grupo.class, false);
-
-    public GruposView(GrupoService grupoService) {
+    public GruposView(GrupoService grupoService, SessionService session) {
         this.grupoService = grupoService;
+        this.session = session;
 
-        setPadding(true);
-        setSpacing(true);
+        setWidthFull();
 
-        H3 titulo = new H3("Grupos disponibles");
-
-        // ---------- Tabla ----------
-        tabla.addColumn(Grupo::getId).setHeader("ID");
-        tabla.addColumn(Grupo::getNombreGrupo).setHeader("Nombre");
-        tabla.addColumn(Grupo::getDescripcion).setHeader("Descripción");
-        tabla.addComponentColumn(this::crearBotonVer)
-                .setHeader("Ver detalles");
-
-        tabla.setItems(grupoService.obtenerTodos());
-
-        add(titulo, tabla);
+        mostrarGrupos();
     }
 
-    // ----------------------------------------------------------------------
-    // BOTÓN DE VER DETALLES (Abre modal)
-    // ----------------------------------------------------------------------
-    private Button crearBotonVer(Grupo g) {
-        Button btn = new Button("Ver",
-                VaadinIcon.EYE.create(),
-                e -> abrirDialogoGrupo(g));
+    private void mostrarGrupos() {
+        removeAll();
 
-        btn.getStyle().set("background-color", "#1976d2");
-        btn.getStyle().set("color", "white");
+        List<Grupo> grupos = grupoService.listarGrupos();
 
-        return btn;
+        for (Grupo g : grupos) {
+
+            VerticalLayout tarjeta = new VerticalLayout();
+            tarjeta.getStyle().set("border", "1px solid #ccc");
+            tarjeta.getStyle().set("padding", "15px");
+            tarjeta.getStyle().set("border-radius", "10px");
+            tarjeta.getStyle().set("background-color", "#fff8f8"); // tu vinito suave
+            tarjeta.setWidth("400px");
+
+            tarjeta.add(new H3(g.getNombreGrupo()));
+            tarjeta.add(new Paragraph(g.getDescripcion()));
+
+            // -------- BOTÓN AÑADIR PARTICIPANTES ----------
+            Button btnAñadir = new Button("Añadir");
+            btnAñadir.getStyle().set("background-color", "#8c2f39"); // vino
+            btnAñadir.getStyle().set("color", "white");
+            btnAñadir.getStyle().set("border-radius", "6px");
+
+            btnAñadir.addClickListener(e -> abrirDialogoAñadir(g));
+
+            tarjeta.add(btnAñadir);
+
+            add(tarjeta);
+        }
     }
 
-    // ----------------------------------------------------------------------
-    // DIALOGO DEL GRUPO
-    // ----------------------------------------------------------------------
-    private void abrirDialogoGrupo(Grupo grupo) {
+    // **************************************************************
+    //          DIÁLOGO FLOTANTE: DESCRIPCIÓN + PARTICIPANTES
+    // **************************************************************
+    private void abrirDialogoAñadir(Grupo grupo) {
 
         Dialog dialog = new Dialog();
-        dialog.setWidth("500px");
+        dialog.setWidth("600px");
+        dialog.setHeight("450px");
 
-        H3 titulo = new H3("Grupo: " + grupo.getNombreGrupo());
-        Paragraph desc = new Paragraph(grupo.getDescripcion());
+        // Título + botón cerrar
+        HorizontalLayout header = new HorizontalLayout();
+        header.setWidthFull();
+        header.add(new H3(grupo.getNombreGrupo()));
 
-        // -------- LISTA DE PARTICIPANTES --------
-        VerticalLayout lista = new VerticalLayout();
-        lista.setPadding(false);
+        Button cerrar = new Button("X", e -> dialog.close());
+        cerrar.getStyle().set("background-color", "transparent");
+        cerrar.getStyle().set("color", "black");
 
-        lista.getStyle().set("border", "1px solid #CCC");
-        lista.getStyle().set("max-height", "200px");
-        lista.getStyle().set("overflow-y", "auto");
+        header.add(cerrar);
+        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
 
-        // Se cargan dentro de la transacción → NO LANZA ERRORES
-        grupoService.obtenerNombresParticipantes(grupo.getId())
-                .forEach(nombre -> lista.add(new Paragraph(nombre)));
+        // Descripción
+        Paragraph descripcion = new Paragraph(grupo.getDescripcion());
+        descripcion.getStyle().set("font-size", "14px");
 
-        // -------- AÑADIR PARTICIPANTE --------
-        TextField campoLogin = new TextField("Usuario a añadir");
-        Button btnAdd = new Button("Añadir", VaadinIcon.USERS.create(), e -> {
+        // ******** LISTA SCROLLABLE DE PARTICIPANTES ********
+        MultiSelectListBox<String> lista = new MultiSelectListBox<>();
+        lista.setItems(grupo.getLoginsParticipantes());
+
+        lista.getStyle().set("border", "1px solid #ccc");
+        lista.getStyle().set("padding", "10px");
+        lista.setHeight("200px"); // scroll
+
+        // Botón confirmar añadir
+        Button agregar = new Button("Añadir Participante");
+        agregar.getStyle().set("background-color", "#8c2f39");
+        agregar.getStyle().set("color", "white");
+
+        agregar.addClickListener(e -> {
+
+            String login = session.getLoginEnSesion();
+
             try {
-                grupoService.agregarParticipante(grupo.getId(), campoLogin.getValue());
-                lista.add(new Paragraph(campoLogin.getValue()));
-                campoLogin.clear();
+                grupoService.unirUsuarioAGrupo(login, grupo.getId());
+                Notification.show("Te uniste al grupo " + grupo.getNombreGrupo());
+
+                dialog.close();
+                mostrarGrupos(); // refresca
             } catch (Exception ex) {
-                lista.add(new Paragraph("⚠ " + ex.getMessage()));
+                Notification.show(ex.getMessage());
             }
         });
 
-        btnAdd.getStyle().set("background-color", "#43A047");
-        btnAdd.getStyle().set("color", "white");
+        VerticalLayout contenido = new VerticalLayout(header, descripcion, lista, agregar);
+        contenido.setPadding(true);
 
-        // Cerrar
-        Button cerrar = new Button("Cerrar", e -> dialog.close());
-
-        dialog.add(
-                titulo,
-                desc,
-                new H3("Participantes"),
-                lista,
-                new HorizontalLayout(campoLogin, btnAdd),
-                cerrar
-        );
-
+        dialog.add(contenido);
         dialog.open();
     }
 }

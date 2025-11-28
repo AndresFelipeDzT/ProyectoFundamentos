@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class GrupoService {
@@ -26,32 +25,42 @@ public class GrupoService {
     @Autowired
     private ParticipantesGrupoRepository participantesRepo;
 
-    // Crear grupo -----------------------------------------
+    // Crear grupo (ejemplo sencillo)
     @Transactional
     public Grupo crearGrupo(String nombre, String descripcion, String creadorLogin) {
-
+        if (nombre == null || nombre.isBlank()) {
+            throw new RuntimeException("Nombre del grupo inválido");
+        }
         if (grupoRepository.existsByNombreGrupoIgnoreCase(nombre)) {
             throw new RuntimeException("Ya existe un grupo con ese nombre");
         }
-
         Usuario creador = usuarioRepository.findById(creadorLogin)
                 .orElseThrow(() -> new RuntimeException("Creador no encontrado"));
 
-        Grupo grupo = new Grupo(nombre, descripcion, creador);
-        grupoRepository.save(grupo);
+        Grupo grupo = new Grupo();
+        grupo.setNombreGrupo(nombre);
+        grupo.setDescripcion(descripcion);
+        grupo.setCreador(creador);
 
-        // El creador entra automáticamente
-        participantesRepo.save(new ParticipantesGrupo(creador, grupo));
+        Grupo guardado = grupoRepository.save(grupo);
 
-        return grupo;
+        // Agregar creador como participante
+        participantesRepo.save(new ParticipantesGrupo(creador, guardado));
+        return guardado;
     }
 
-    // Obtener todos ----------------------------------------
-    public List<Grupo> obtenerTodos() {
+    // Devuelve todos los grupos (se puede renombrar listarGrupos)
+    @Transactional(readOnly = true)
+    public List<Grupo> listarGrupos() {
         return grupoRepository.findAll();
     }
 
-    // Cargar nombres realmente dentro de la transacción ----
+    // Alternativa de nombre que estabas llamando desde la UI
+    public List<Grupo> obtenerTodos() {
+        return listarGrupos();
+    }
+
+    // Obtener nombres de participantes dentro de la transacción
     @Transactional(readOnly = true)
     public List<String> obtenerNombresParticipantes(Long grupoId) {
         return participantesRepo.findByGrupoId(grupoId)
@@ -60,12 +69,11 @@ public class GrupoService {
                 .toList();
     }
 
-    // Agregar un usuario al grupo --------------------------
+    // Método público para unir un usuario (nombre 'unirUsuarioAGrupo' que estabas llamando)
     @Transactional
-    public void agregarParticipante(Long grupoId, String loginUsuario) {
-
-        boolean yaExiste = participantesRepo.existsByGrupoIdAndUsuarioLogin(grupoId, loginUsuario);
-        if (yaExiste) {
+    public void unirUsuarioAGrupo(String loginUsuario, Long grupoId) {
+        boolean existe = participantesRepo.existsByGrupoIdAndUsuarioLogin(grupoId, loginUsuario);
+        if (existe) {
             throw new RuntimeException("El usuario ya pertenece al grupo");
         }
 
@@ -75,7 +83,13 @@ public class GrupoService {
         Usuario usuario = usuarioRepository.findById(loginUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-        ParticipantesGrupo participante = new ParticipantesGrupo(usuario, grupo);
-        participantesRepo.save(participante);
+        ParticipantesGrupo nuevo = new ParticipantesGrupo(usuario, grupo);
+        participantesRepo.save(nuevo);
+    }
+
+    // Método alternativo sinónimo (por si tu código lo usa)
+    @Transactional
+    public void agregarParticipante(Long grupoId, String loginUsuario) {
+        unirUsuarioAGrupo(loginUsuario, grupoId);
     }
 }
