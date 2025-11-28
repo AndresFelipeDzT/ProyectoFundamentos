@@ -27,28 +27,19 @@ public class GrupoService {
 
     // Crear grupo (ejemplo sencillo)
     @Transactional
-    public Grupo crearGrupo(String nombre, String descripcion, String creadorLogin) {
-        if (nombre == null || nombre.isBlank()) {
-            throw new RuntimeException("Nombre del grupo inválido");
+   public Grupo crearGrupo(String nombre, String descripcion, Usuario creador) {
+
+        if (grupoRepository.findByNombreGrupoIgnoreCase(nombre).isPresent()) {
+            throw new RuntimeException("El grupo ya existe");
         }
-        if (grupoRepository.existsByNombreGrupoIgnoreCase(nombre)) {
-            throw new RuntimeException("Ya existe un grupo con ese nombre");
-        }
-        Usuario creador = usuarioRepository.findById(creadorLogin)
-                .orElseThrow(() -> new RuntimeException("Creador no encontrado"));
 
-        Grupo grupo = new Grupo();
-        grupo.setNombreGrupo(nombre);
-        grupo.setDescripcion(descripcion);
-        grupo.setCreador(creador);
+        Grupo g = new Grupo();
+        g.setNombreGrupo(nombre);
+        g.setDescripcion(descripcion);
+        g.setCreador(creador);  // 👈 IMPORTANTE
 
-        Grupo guardado = grupoRepository.save(grupo);
-
-        // Agregar creador como participante
-        participantesRepo.save(new ParticipantesGrupo(creador, guardado));
-        return guardado;
+        return grupoRepository.save(g);
     }
-
     // Devuelve todos los grupos (se puede renombrar listarGrupos)
     @Transactional(readOnly = true)
     public List<Grupo> listarGrupos() {

@@ -1,6 +1,8 @@
 package com.ingesoft.redsocial.ui;
 
 import com.ingesoft.redsocial.modelo.Grupo;
+import com.ingesoft.redsocial.modelo.Usuario;
+import com.ingesoft.redsocial.repositorios.UsuarioRepository;
 import com.ingesoft.redsocial.servicios.GrupoService;
 import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
 import com.ingesoft.redsocial.ui.servicio.SessionService;
@@ -15,21 +17,16 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.listbox.MultiSelectListBox;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.component.UI;
 
+
 import java.util.List;
 
 @Route("grupos")
 public class GruposView extends VerticalLayout {
-
-    private final SessionService session;
-    private final NavegacionComponent nav;
-    private final GrupoService grupoService;
 
     private TextField nombreGrupo;
     private TextField descripcion;
@@ -37,13 +34,24 @@ public class GruposView extends VerticalLayout {
 
     private Grid<Grupo> tabla;
 
-    // --- Constructor: INYECTA exactamente lo que tu app usa ---
-    public GruposView(SessionService session, NavegacionComponent nav, GrupoService grupoService) {
+    private final SessionService session;
+    private final NavegacionComponent nav;
+    private final GrupoService grupoService;
+    private final UsuarioRepository usuarioRepository;
+
+
+    public GruposView(SessionService session,
+                    NavegacionComponent nav,
+                    GrupoService grupoService,
+                    UsuarioRepository usuarioRepository) {
+
         this.session = session;
         this.nav = nav;
         this.grupoService = grupoService;
+        this.usuarioRepository = usuarioRepository; 
 
-        // validar sesión sin UI.access (evita bloqueos)
+
+        // validar sesión
         validarSesion();
 
         // Estética y layout
@@ -70,12 +78,15 @@ public class GruposView extends VerticalLayout {
         // crearGrupo(String nombre, String descripcion, String creadorLogin)
         crearGrupo = new Button("Crear Grupo", VaadinIcon.PLUS_CIRCLE.create(), e -> {
             try {
-                grupoService.crearGrupo(
-                    nombreGrupo.getValue(),
-                    descripcion.getValue(),
-                    session.getLoginEnSesion()    // creadorLogin al final, según tu servicio
-                );
-                Notification.show("Grupo creado exitosamente");
+                Usuario creador = usuarioRepository.findById(session.getLoginEnSesion())
+                .orElseThrow(() -> new RuntimeException("Usuario no existe"));
+
+            grupoService.crearGrupo(
+                nombreGrupo.getValue(),
+                descripcion.getValue(),
+                creador
+            );
+            Notification.show("Grupo creado exitosamente");
                 nombreGrupo.clear();
                 descripcion.clear();
                 cargar();
