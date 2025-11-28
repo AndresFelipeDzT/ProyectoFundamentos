@@ -1,124 +1,69 @@
 package com.ingesoft.redsocial.ui;
 
 import com.ingesoft.redsocial.modelo.Grupo;
-import com.ingesoft.redsocial.modelo.Usuario;
 import com.ingesoft.redsocial.servicios.GrupoService;
-import com.ingesoft.redsocial.ui.servicio.SessionService;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.dialog.Dialog;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.listbox.MultiSelectListBox;
+import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.notification.Notification;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
-
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Route("grupos")
 public class GruposView extends VerticalLayout {
 
     private final GrupoService grupoService;
-    private final SessionService session;
+    private final Grid<Grupo> gridGrupos = new Grid<>(Grupo.class, false);
 
-    public GruposView(GrupoService grupoService, SessionService session) {
+    public GruposView(GrupoService grupoService) {
         this.grupoService = grupoService;
-        this.session = session;
 
-        setWidthFull();
+        setPadding(true);
+        setSpacing(true);
 
-        mostrarGrupos();
+        // -----------------------------
+        // CONFIGURACIÓN DE LA TABLA
+        // -----------------------------
+        gridGrupos.addColumn(Grupo::getId).setHeader("ID");
+        gridGrupos.addColumn(Grupo::getNombreGrupo).setHeader("Nombre");
+        gridGrupos.addColumn(Grupo::getDescripcion).setHeader("Descripción");
+
+        // Columna de participantes (solo número, no lista completa)
+        gridGrupos.addColumn(g -> g.getLoginsParticipantes().size())
+                .setHeader("Participantes");
+
+        // -----------------------------
+        // COLUMNA DE ACCIONES → AÑADIR
+        // -----------------------------
+        gridGrupos.addComponentColumn(grupo -> {
+            Button btnAdd = new Button("Añadir");
+            btnAdd.getStyle().set("background-color", "#5A0E2E"); // vinito
+            btnAdd.getStyle().set("color", "white");
+
+            btnAdd.addClickListener(e -> añadirUsuarioAGrupo(grupo));
+            return btnAdd;
+        }).setHeader("Acciones");
+
+        actualizarTabla();
+
+        add(gridGrupos);
     }
 
-    private void mostrarGrupos() {
-        removeAll();
+    // Refresca la tabla
+    private void actualizarTabla() {
+        gridGrupos.setItems(grupoService.obtenerTodos());
+    }
 
-        List<Grupo> grupos = grupoService.listarGrupos();
+    // Acción para añadir usuario (usa tu método existente)
+    private void añadirUsuarioAGrupo(Grupo grupo) {
+        try {
+            String loginActual = "ana"; // <<< O el usuario logueado, usa el tuyo si lo manejas
+            grupoService.unirUsuarioAGrupo(loginActual, grupo.getId());
+            Notification.show("Usuario añadido al grupo");
+            actualizarTabla();
 
-        for (Grupo g : grupos) {
-
-            VerticalLayout tarjeta = new VerticalLayout();
-            tarjeta.getStyle().set("border", "1px solid #ccc");
-            tarjeta.getStyle().set("padding", "15px");
-            tarjeta.getStyle().set("border-radius", "10px");
-            tarjeta.getStyle().set("background-color", "#fff8f8"); // tu vinito suave
-            tarjeta.setWidth("400px");
-
-            tarjeta.add(new H3(g.getNombreGrupo()));
-            tarjeta.add(new Paragraph(g.getDescripcion()));
-
-            // -------- BOTÓN AÑADIR PARTICIPANTES ----------
-            Button btnAñadir = new Button("Añadir");
-            btnAñadir.getStyle().set("background-color", "#8c2f39"); // vino
-            btnAñadir.getStyle().set("color", "white");
-            btnAñadir.getStyle().set("border-radius", "6px");
-
-            btnAñadir.addClickListener(e -> abrirDialogoAñadir(g));
-
-            tarjeta.add(btnAñadir);
-
-            add(tarjeta);
+        } catch (Exception ex) {
+            Notification.show("Error: " + ex.getMessage(), 4000, Notification.Position.TOP_CENTER);
         }
-    }
-
-    // **************************************************************
-    //          DIÁLOGO FLOTANTE: DESCRIPCIÓN + PARTICIPANTES
-    // **************************************************************
-    private void abrirDialogoAñadir(Grupo grupo) {
-
-        Dialog dialog = new Dialog();
-        dialog.setWidth("600px");
-        dialog.setHeight("450px");
-
-        // Título + botón cerrar
-        HorizontalLayout header = new HorizontalLayout();
-        header.setWidthFull();
-        header.add(new H3(grupo.getNombreGrupo()));
-
-        Button cerrar = new Button("X", e -> dialog.close());
-        cerrar.getStyle().set("background-color", "transparent");
-        cerrar.getStyle().set("color", "black");
-
-        header.add(cerrar);
-        header.setJustifyContentMode(JustifyContentMode.BETWEEN);
-
-        // Descripción
-        Paragraph descripcion = new Paragraph(grupo.getDescripcion());
-        descripcion.getStyle().set("font-size", "14px");
-
-        // ******** LISTA SCROLLABLE DE PARTICIPANTES ********
-        MultiSelectListBox<String> lista = new MultiSelectListBox<>();
-        lista.setItems(grupo.getLoginsParticipantes());
-
-        lista.getStyle().set("border", "1px solid #ccc");
-        lista.getStyle().set("padding", "10px");
-        lista.setHeight("200px"); // scroll
-
-        // Botón confirmar añadir
-        Button agregar = new Button("Añadir Participante");
-        agregar.getStyle().set("background-color", "#8c2f39");
-        agregar.getStyle().set("color", "white");
-
-        agregar.addClickListener(e -> {
-
-            String login = session.getLoginEnSesion();
-
-            try {
-                grupoService.unirUsuarioAGrupo(login, grupo.getId());
-                Notification.show("Te uniste al grupo " + grupo.getNombreGrupo());
-
-                dialog.close();
-                mostrarGrupos(); // refresca
-            } catch (Exception ex) {
-                Notification.show(ex.getMessage());
-            }
-        });
-
-        VerticalLayout contenido = new VerticalLayout(header, descripcion, lista, agregar);
-        contenido.setPadding(true);
-
-        dialog.add(contenido);
-        dialog.open();
     }
 }
