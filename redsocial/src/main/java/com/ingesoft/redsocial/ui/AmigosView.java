@@ -119,17 +119,15 @@ public class AmigosView extends VerticalLayout {
         });
 
         add(navegacion, tabSheet);
-
-        // Carga inicial
-        cargaUsuarios();
     }
 
-    // == VALIDACIÓN DE SESIÓN (AHORA SÍ CORRECTA)
+    // == VALIDACIÓN DE SESIÓN
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
         }
+        cargaUsuarios();
     }
 
     private void enviarSolicitud() {
