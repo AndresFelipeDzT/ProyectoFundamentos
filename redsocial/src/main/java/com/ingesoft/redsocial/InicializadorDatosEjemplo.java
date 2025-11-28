@@ -1,6 +1,8 @@
 package com.ingesoft.redsocial;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import com.ingesoft.redsocial.modelo.*;
@@ -21,6 +23,9 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
     private final ParticipantesGrupoRepository participantesRepo;
     private final PublicacionRepository publicacionRepo;
     private final ComentarioRepository comentarioRepo;
+    
+     @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public InicializadorDatosEjemplo(
             UsuarioRepository usuarioRepo,
@@ -39,17 +44,38 @@ public class InicializadorDatosEjemplo implements CommandLineRunner {
     @Transactional
     public void run(String... args) throws Exception {
 
-        // == USUARIOS ==
+      // == USUARIOS ==
         Map<String, Usuario> usuarios = new HashMap<>();
 
-        usuarios.put("andresdiaz5", new Usuario("andresdiaz5", "Andres Diaz", "andresdiaz5*"));
-        usuarios.put("rayosantiago", new Usuario("rayosantiago", "Santiago Rayo", "rayosantiago3*"));
-        usuarios.put("mottat", new Usuario("mottat", "Pablo Motta", "juanpablomotta!"));
-        usuarios.put("romerocana", new Usuario("romerocana", "Ana Romero", "romero20*"));
-        usuarios.put("jaimec20", new Usuario("jaimec20", "Jaime Chavarriaga", "jaime2005#"));
+        Usuario andres = new Usuario();
+        andres.setLogin("andresdiaz5");
+        andres.setPassword(passwordEncoder.encode("andresdiaz5*"));
+        usuarioRepo.save(andres);
+        usuarios.put("andresdiaz5", andres);
 
-        // Guardar usuarios
-        usuarios.values().forEach(u -> usuarioRepo.save(u));
+        Usuario santiago = new Usuario();
+        santiago.setLogin("rayosantiago");
+        santiago.setPassword(passwordEncoder.encode("rayosantiago3*"));
+        usuarioRepo.save(santiago);
+        usuarios.put("rayosantiago", santiago);
+
+        Usuario pablo = new Usuario();
+        pablo.setLogin("mottat");
+        pablo.setPassword(passwordEncoder.encode("juanpablomotta!"));
+        usuarioRepo.save(pablo);
+        usuarios.put("mottat", pablo);
+
+        Usuario ana = new Usuario();
+        ana.setLogin("romerocana");
+        ana.setPassword(passwordEncoder.encode("romero20*"));
+        usuarioRepo.save(ana);
+        usuarios.put("romerocana", ana);
+
+        Usuario jaime = new Usuario();
+        jaime.setLogin("jaimec20");
+        jaime.setPassword(passwordEncoder.encode("jaime2005#"));
+        usuarioRepo.save(jaime);
+        usuarios.put("jaimec20", jaime);
 
         // == GRUPOS ==
         Map<String, Grupo> grupos = new HashMap<>();
