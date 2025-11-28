@@ -1,10 +1,8 @@
 package com.ingesoft.redsocial.modelo;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,66 +13,79 @@ public class Comentario {
     private Long id;
 
     private String texto;
-    private LocalDateTime fecha;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    private String fecha;
+
+    @ManyToOne
+    @JoinColumn(name = "autor_id")
     private Usuario autor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
+    @ManyToOne
+    @JoinColumn(name = "publicacion_id")
     private Publicacion publicacion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
-    private Comentario comentarioPadre; 
+    @ManyToOne
+    @JoinColumn(name = "respuesta_padre_id")
+    private Comentario respuestaPadre;
 
-    @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<Comentario> respuestas = new HashSet<>();
+    @OneToMany(mappedBy = "respuestaPadre", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Comentario> respuestas = new ArrayList<>();
 
-    @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<Reaccion> reacciones = new HashSet<>();
+    // Getters y Setters
 
-    public Comentario() {
-        this.respuestas = new HashSet<>();
-        this.reacciones = new HashSet<>();
+    public Long getId() {
+        return id;
     }
 
-    public Comentario(String texto, Usuario autor, Publicacion publicacion) {
-        this();
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTexto() {
+        return texto;
+    }
+
+    public void setTexto(String texto) {
         this.texto = texto;
-        this.autor = autor;
-        this.publicacion = publicacion;
-        this.fecha = LocalDateTime.now();
     }
 
-    // Getters y setters
-    public Long getId() { return id; }
-    public String getTexto() { return texto; }
-    public LocalDateTime getFecha() { return fecha; }
-    public Usuario getAutor() { return autor; }
-    public Publicacion getPublicacion() { return publicacion; }
-    public Comentario getComentarioPadre() { return comentarioPadre; }
-    public Set<Comentario> getRespuestas() { return respuestas; }
-    public Set<Reaccion> getReacciones() { return reacciones; }
+    public String getFecha() {
+        return fecha;
+    }
 
-    public void setTexto(String texto) { this.texto = texto; }
-    public void setFecha(LocalDateTime fecha) { this.fecha = fecha; }
-    public void setAutor(Usuario autor) { this.autor = autor; }
-    public void setPublicacion(Publicacion publicacion) { this.publicacion = publicacion; }
-    public void setComentarioPadre(Comentario comentarioPadre) { this.comentarioPadre = comentarioPadre; }
-    public void setRespuestas(Set<Comentario> respuestas) { this.respuestas = respuestas; }
-    public void setReacciones(Set<Reaccion> reacciones) { this.reacciones = reacciones; }
+    public void setFecha(String fecha) {
+        this.fecha = fecha;
+    }
 
-    @Override
-    public int hashCode() { return id != null ? id.hashCode() : 0; }
+    public Usuario getAutor() {
+        return autor;
+    }
 
-    @Override
-    public boolean equals(Object obj) {
-        if(this == obj) return true;
-        if(obj == null || getClass() != obj.getClass()) return false;
-        Comentario other = (Comentario) obj;
-        return id != null && id.equals(other.getId());
+    public void setAutor(Usuario autor) {
+        this.autor = autor;
+    }
+
+    public Publicacion getPublicacion() {
+        return publicacion;
+    }
+
+    public void setPublicacion(Publicacion publicacion) {
+        this.publicacion = publicacion;
+    }
+
+    public Comentario getRespuestaPadre() {
+        return respuestaPadre;
+    }
+
+    public void setRespuestaPadre(Comentario respuestaPadre) {
+        this.respuestaPadre = respuestaPadre;
+    }
+
+    public List<Comentario> getRespuestas() {
+        return respuestas;
+    }
+
+    public void setRespuestas(List<Comentario> respuestas) {
+        this.respuestas = respuestas;
     }
 }

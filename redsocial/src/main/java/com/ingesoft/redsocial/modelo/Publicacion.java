@@ -1,10 +1,9 @@
 package com.ingesoft.redsocial.modelo;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -15,47 +14,65 @@ public class Publicacion {
     private Long id;
 
     private String contenido;
-    private LocalDateTime fechaCreacion;
-    private String rutaArchivo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    private String rutaImagen;
+
+    private LocalDateTime fechaCreacion;
+
+    @ManyToOne
+    @JoinColumn(name = "autor_id")
     private Usuario autor;
 
-    @OneToMany(mappedBy = "publicacion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore
-    private Set<Comentario> comentarios = new HashSet<>();
+    @OneToMany(mappedBy = "publicacion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Comentario> comentarios = new ArrayList<>();
 
-    public Publicacion() { this.comentarios = new HashSet<>(); }
+    // Getters y Setters
 
-    public Publicacion(String contenido, Usuario autor) {
-        this();
-        this.contenido = contenido;
-        this.autor = autor;
-        this.fechaCreacion = LocalDateTime.now();
+    public Long getId() {
+        return id;
     }
 
-    // Getters y setters
-    public Long getId() { return id; }
-    public String getContenido() { return contenido; }
-    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
-    public String getRutaArchivo() { return rutaArchivo; }
-    public Usuario getAutor() { return autor; }
-    public Set<Comentario> getComentarios() { return comentarios; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public void setContenido(String contenido) { this.contenido = contenido; }
-    public void setFechaCreacion(LocalDateTime fechaCreacion) { this.fechaCreacion = fechaCreacion; }
-    public void setRutaArchivo(String rutaArchivo) { this.rutaArchivo = rutaArchivo; }
-    public void setAutor(Usuario autor) { this.autor = autor; }
-    public void setComentarios(Set<Comentario> comentarios) { this.comentarios = comentarios; }
+    public String getContenido() {
+        return contenido;
+    }
 
-    @Override
-    public int hashCode() { return id != null ? id.hashCode() : 0; }
+    public void setContenido(String contenido) {
+        this.contenido = contenido;
+    }
 
-    @Override
-    public boolean equals(Object obj) {
-        if(this == obj) return true;
-        if(obj == null || getClass() != obj.getClass()) return false;
-        Publicacion other = (Publicacion) obj;
-        return id != null && id.equals(other.getId());
+    public String getRutaImagen() {
+        return rutaImagen;
+    }
+
+    public void setRutaImagen(String rutaImagen) {
+        this.rutaImagen = rutaImagen;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public Usuario getAutor() {
+        return autor;
+    }
+
+    public void setAutor(Usuario autor) {
+        this.autor = autor;
+    }
+
+    public List<Comentario> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(List<Comentario> comentarios) {
+        this.comentarios = comentarios;
     }
 }

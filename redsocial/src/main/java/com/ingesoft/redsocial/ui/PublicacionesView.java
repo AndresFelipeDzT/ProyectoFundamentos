@@ -29,10 +29,8 @@ import com.ingesoft.redsocial.excepciones.PublicacionNotFoundException;
 import com.ingesoft.redsocial.excepciones.UsuarioNotFoundException;
 import com.ingesoft.redsocial.modelo.Comentario;
 import com.ingesoft.redsocial.modelo.Publicacion;
-import com.ingesoft.redsocial.modelo.Reaccion;
 import com.ingesoft.redsocial.servicios.ComentarioService;
 import com.ingesoft.redsocial.servicios.PublicacionService;
-import com.ingesoft.redsocial.servicios.ReaccionService;
 import com.ingesoft.redsocial.ui.componentes.NavegacionComponent;
 import com.ingesoft.redsocial.ui.servicio.SessionService;
 
@@ -52,9 +50,6 @@ public class PublicacionesView extends VerticalLayout {
     @Autowired
     private ComentarioService comentarioService;
 
-    @Autowired
-    private ReaccionService reaccionService;
-
     private TextArea areaPublicacion;
     private Grid<Publicacion> tabla;
     private FileBuffer buffer = new FileBuffer();
@@ -64,10 +59,12 @@ public class PublicacionesView extends VerticalLayout {
 
     public PublicacionesView(SessionService sessionService,
                              NavegacionComponent navegacion,
-                             PublicacionService publicacionService) {
+                             PublicacionService publicacionService,
+                             ComentarioService comentarioService) {
         this.sessionService = sessionService;
         this.navegacion = navegacion;
         this.publicacionService = publicacionService;
+        this.comentarioService = comentarioService;
 
         UI.getCurrent().access(this::validarSesion);
 
@@ -102,7 +99,14 @@ public class PublicacionesView extends VerticalLayout {
              .setHeader("Fecha").setAutoWidth(true);
 
         tabla.addComponentColumn(p -> {
-            Button ver = new Button("Ver / Comentar", e -> abrirDialogPublicacion(p));
+            Button ver = new Button("Ver / Comentar", e -> {
+                try {
+                    abrirDialogPublicacion(p);
+                } catch (PublicacionNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+            });
             ver.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             return ver;
         }).setHeader("Acciones").setAutoWidth(true);
@@ -144,6 +148,8 @@ public class PublicacionesView extends VerticalLayout {
             uploadComponent.setReceiver(buffer);
 
             cargarFeed();
+        } catch (UsuarioNotFoundException e) {
+            Notification.show("Usuario no encontrado: " + e.getMessage());
         } catch (Exception e) {
             Notification.show("Error publicando: " + e.getMessage());
         }
@@ -154,7 +160,7 @@ public class PublicacionesView extends VerticalLayout {
         tabla.setItems(publicaciones);
     }
 
-    private void abrirDialogPublicacion(Publicacion publicacion) {
+    private void abrirDialogPublicacion(Publicacion publicacion) throws PublicacionNotFoundException {
         Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
 
         Dialog dialog = new Dialog();
@@ -190,7 +196,12 @@ public class PublicacionesView extends VerticalLayout {
                     Notification.show("Error al comentar: " + ex.getMessage());
                 }
                 areaComentario.clear();
-                recargarComentarios(pubCompleta.getId(), comentariosModal);
+                try {
+                    recargarComentarios(pubCompleta.getId(), comentariosModal);
+                } catch (PublicacionNotFoundException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
             }
         });
 
@@ -204,7 +215,7 @@ public class PublicacionesView extends VerticalLayout {
         dialog.open();
     }
 
-    private void recargarComentarios(Long publicacionId, VerticalLayout comentariosModal) {
+    private void recargarComentarios(Long publicacionId, VerticalLayout comentariosModal) throws PublicacionNotFoundException {
         comentariosModal.removeAll();
         Publicacion actualizado = publicacionService.obtenerPorIdConComentarios(publicacionId);
         for (Comentario c : actualizado.getComentarios()) {
@@ -222,32 +233,7 @@ public class PublicacionesView extends VerticalLayout {
         Label autor = new Label(c.getAutor().getNombre() + " - " + c.getFecha());
         Label texto = new Label(c.getTexto());
 
-        HorizontalLayout acciones = new HorizontalLayout();
-        Label contadorLike = new Label(String.valueOf(contarReacciones(c, Reaccion.TipoReaccion.LIKE)));
-        Label contadorDislike = new Label(String.valueOf(contarReacciones(c, Reaccion.TipoReaccion.DISLIKE)));
-
-        Button like = new Button("👍", e -> {
-            try {
-                reaccionService.reaccionar(sessionService.getLoginEnSesion(), c.getId(), Reaccion.TipoReaccion.LIKE);
-                recargarComentario(c, layout);
-            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); } catch (ComentarioNotFoundException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        });
-
-        Button dislike = new Button("👎", e -> {
-            try {
-                reaccionService.reaccionar(sessionService.getLoginEnSesion(), c.getId(), Reaccion.TipoReaccion.DISLIKE);
-                recargarComentario(c, layout);
-            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); } catch (ComentarioNotFoundException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        });
-
-        acciones.add(like, contadorLike, dislike, contadorDislike);
-        layout.add(autor, texto, acciones);
+        layout.add(autor, texto);
 
         if (c.getRespuestas() != null) {
             for (Comentario r : c.getRespuestas()) {
@@ -258,52 +244,6 @@ public class PublicacionesView extends VerticalLayout {
         }
 
         return layout;
-    }
-
-    private void recargarComentario(Comentario c, VerticalLayout layout) throws ComentarioNotFoundException {
-        Comentario actualizado = comentarioService.obtenerPorIdConRespuestas(c.getId());
-        layout.removeAll();
-        Label autor = new Label(actualizado.getAutor().getNombre() + " - " + actualizado.getFecha());
-        Label texto = new Label(actualizado.getTexto());
-
-        HorizontalLayout acciones = new HorizontalLayout();
-        Label contadorLike = new Label(String.valueOf(contarReacciones(actualizado, Reaccion.TipoReaccion.LIKE)));
-        Label contadorDislike = new Label(String.valueOf(contarReacciones(actualizado, Reaccion.TipoReaccion.DISLIKE)));
-
-        Button like = new Button("👍", e -> {
-            try {
-                reaccionService.reaccionar(sessionService.getLoginEnSesion(), actualizado.getId(), Reaccion.TipoReaccion.LIKE);
-                recargarComentario(actualizado, layout);
-            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); } catch (ComentarioNotFoundException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        });
-
-        Button dislike = new Button("👎", e -> {
-            try {
-                reaccionService.reaccionar(sessionService.getLoginEnSesion(), actualizado.getId(), Reaccion.TipoReaccion.DISLIKE);
-                recargarComentario(actualizado, layout);
-            } catch (UsuarioNotFoundException ex) { ex.printStackTrace(); } catch (ComentarioNotFoundException e1) {
-                // TODO Auto-generated catch block
-                e1.printStackTrace();
-            }
-        });
-
-        acciones.add(like, contadorLike, dislike, contadorDislike);
-        layout.add(autor, texto, acciones);
-
-        if (actualizado.getRespuestas() != null) {
-            for (Comentario r : actualizado.getRespuestas()) {
-                VerticalLayout respuestaLayout = crearLayoutComentarioModal(r);
-                respuestaLayout.getStyle().set("margin-left", "20px");
-                layout.add(respuestaLayout);
-            }
-        }
-    }
-
-    private int contarReacciones(Comentario c, Reaccion.TipoReaccion tipo) {
-        return (int) c.getReacciones().stream().filter(r -> r.getTipo() == tipo).count();
     }
 
     private void validarSesion() {

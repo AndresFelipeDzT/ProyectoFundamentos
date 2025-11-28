@@ -1,10 +1,10 @@
 package com.ingesoft.redsocial.servicios;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.ingesoft.redsocial.excepciones.ComentarioNotFoundException;
 import com.ingesoft.redsocial.excepciones.PublicacionNotFoundException;
@@ -19,47 +19,39 @@ import com.ingesoft.redsocial.repositorios.UsuarioRepository;
 @Service
 public class ComentarioService {
 
-    private final ComentarioRepository comentarioRepository;
-    private final PublicacionRepository publicacionRepository;
-    private final UsuarioRepository usuarioRepository;
+    @Autowired
+    private ComentarioRepository comentarioRepositorio;
 
-    public ComentarioService(ComentarioRepository comentarioRepository,
-                             PublicacionRepository publicacionRepository,
-                             UsuarioRepository usuarioRepository) {
-        this.comentarioRepository = comentarioRepository;
-        this.publicacionRepository = publicacionRepository;
-        this.usuarioRepository = usuarioRepository;
-    }
+    @Autowired
+    private UsuarioRepository usuarioRepositorio;
 
-    @Transactional
-    public void crearComentario(String loginUsuario, Long publicacionId, String texto, Long comentarioPadreId)
+    @Autowired
+    private PublicacionRepository publicacionRepositorio;
+
+    public Comentario crearComentario(String loginAutor, Long idPublicacion, String texto, Comentario respuestaPadre)
             throws UsuarioNotFoundException, PublicacionNotFoundException {
-        Usuario autor = usuarioRepository.findByLogin(loginUsuario)
+
+        Usuario autor = usuarioRepositorio.findByLogin(loginAutor)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no encontrado"));
 
-        Publicacion publicacion = publicacionRepository.findById(publicacionId)
+        Publicacion publicacion = publicacionRepositorio.findById(idPublicacion)
                 .orElseThrow(() -> new PublicacionNotFoundException("Publicación no encontrada"));
 
-        Comentario comentario = new Comentario();
-        comentario.setAutor(autor);
-        comentario.setPublicacion(publicacion);
-        comentario.setTexto(texto);
-        comentario.setFecha(LocalDateTime.now());
+        Comentario c = new Comentario();
+        c.setAutor(autor);
+        c.setTexto(texto);
+        c.setFecha(LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        c.setPublicacion(publicacion);
 
-        if (comentarioPadreId != null) {
-            comentarioRepository.findById(comentarioPadreId).ifPresent(comentario::setComentarioPadre);
+        if (respuestaPadre != null) {
+            c.setRespuestaPadre(respuestaPadre);
         }
 
-        comentarioRepository.save(comentario);
+        return comentarioRepositorio.save(c);
     }
 
-     @Transactional(readOnly = true)
     public Comentario obtenerPorIdConRespuestas(Long id) throws ComentarioNotFoundException {
-    Comentario c = comentarioRepository.findById(id)
-                    .orElseThrow(() -> new ComentarioNotFoundException("Comentario no encontrado"));
-    // Inicializar respuestas para evitar LazyInitializationException
-    c.getRespuestas().size();
-    return c;
-}
-
+        return comentarioRepositorio.findById(id)
+                .orElseThrow(() -> new ComentarioNotFoundException("Comentario no encontrado"));
+    }
 }

@@ -3,6 +3,7 @@ package com.ingesoft.redsocial.repositorios;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -36,4 +37,7 @@ public interface PublicacionRepository extends JpaRepository<Publicacion, Long> 
            "LEFT JOIN FETCH p.autor " +
            "ORDER BY p.fechaCreacion DESC")
     List<Publicacion> findAllWithComentariosYReacciones();
+
+     @EntityGraph(attributePaths = {"autor", "comentarios", "comentarios.autor", "comentarios.respuestas"})
+    List<Publicacion> findAllByOrderByFechaCreacionDesc();
 }
