@@ -51,7 +51,17 @@ public class PublicacionService {
         return publicaciones.findByAutorLogin(login);
     }
 
+    @Transactional
     public Publicacion obtenerPorIdConComentarios(Long id) {
-        return publicaciones.findByIdConComentariosYReacciones(id);
+        Publicacion pub = publicaciones.findById(id)
+        .orElseThrow(() -> new RuntimeException("No se encontró la publicación"));
+
+        // Forzar carga de comentarios y sus relaciones
+        pub.getComentarios().forEach(c -> {
+            c.getReacciones().size();
+            c.getRespuestas().size();
+        });
+
+        return pub;
     }
 }

@@ -28,11 +28,11 @@ public class Comentario {
     private Publicacion publicacion;
 
     @ManyToOne
-    private Comentario comentarioPadre;
+    private Comentario comentarioPadre; // Para respuestas
 
-    @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Comentario> respuestas = new HashSet<>();
 
-    @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<Reaccion> reacciones = new HashSet<>();
 }
