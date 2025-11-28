@@ -3,9 +3,11 @@ package com.ingesoft.redsocial.modelo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Data
+@EqualsAndHashCode(exclude = "usuario")
 public class PerfilAcademico {
 
     @Id

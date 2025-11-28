@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Data
+@EqualsAndHashCode(exclude = "perfil")
 public class Usuario {
 
     @Id
