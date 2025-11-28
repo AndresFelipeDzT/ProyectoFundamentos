@@ -51,7 +51,7 @@ public class PublicacionService {
         return publicaciones.findByAutorLogin(login);
     }
 
-     public Publicacion obtenerPorIdConComentarios(Long id) {
-        return publicaciones.findByIdWithComentariosYReacciones(id);
+    public Publicacion obtenerPorIdConComentarios(Long id) {
+        return publicaciones.findByIdConComentariosYReacciones(id);
     }
 }

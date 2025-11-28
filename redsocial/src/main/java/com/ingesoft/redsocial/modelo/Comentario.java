@@ -28,9 +28,9 @@ public class Comentario {
     @ManyToOne
     private Comentario comentarioPadre; // Para respuestas
 
-    @OneToMany(mappedBy = "comentario", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Reaccion> reacciones = new ArrayList<>();
+    @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY)
+    private List<Comentario> respuestas;
 
-    @OneToMany(mappedBy = "comentarioPadre", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comentario> respuestas = new ArrayList<>();
+    @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY)
+    private List<Reaccion> reacciones;
 }

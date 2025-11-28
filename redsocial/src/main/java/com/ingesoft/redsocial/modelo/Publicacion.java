@@ -23,6 +23,6 @@ public class Publicacion {
     @ManyToOne
     private Usuario autor;
 
-    @OneToMany(mappedBy = "publicacion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comentario> comentarios = new ArrayList<>();
+    @OneToMany(mappedBy = "publicacion", fetch = FetchType.LAZY)
+    private List<Comentario> comentarios;
 }

@@ -16,11 +16,12 @@ public interface PublicacionRepository extends JpaRepository<Publicacion, Long> 
 
     List<Publicacion> findAllByOrderByFechaCreacionDesc();
 
-    @Query("SELECT DISTINCT p FROM Publicacion p " +
-           "LEFT JOIN FETCH p.comentarios c " +
-           "LEFT JOIN FETCH c.reacciones " +
-           "WHERE p.id = :id")
-    Publicacion findByIdWithComentariosYReacciones(@Param("id") Long id);
+    @Query("SELECT p FROM Publicacion p " +
+        "LEFT JOIN FETCH p.comentarios c " +
+        "LEFT JOIN FETCH c.reacciones " +
+        "LEFT JOIN FETCH c.respuestas " +
+        "WHERE p.id = :id")
+    Publicacion findByIdConComentariosYReacciones(@Param("id") Long id);
 
 }
 
