@@ -1,0 +1,2 @@
+108164
+/usr/local/sdkman/candidates/java/25.0.1-tem/bin/java -agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=localhost:40339 @/tmp/cp_6a03osp46jngp2dins0zdrn0m.argfile com.ingesoft.redsocial.RedsocialApplication
