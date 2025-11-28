@@ -144,32 +144,43 @@ public class GruposView extends VerticalLayout {
     }
 
     private void abrirDialogoUnirse(Grupo grupo) {
+
         Dialog dialog = new Dialog();
-        dialog.setWidth("520px");
+        dialog.setWidth("700px");
 
         H3 titulo = new H3("Grupo: " + grupo.getNombreGrupo());
-        Paragraph desc = new Paragraph(grupo.getDescripcion());
 
+        TextField desc = new TextField("Descripción");
+        desc.setValue(grupo.getDescripcion());
+        desc.setReadOnly(true);
+        desc.setWidthFull();
+        desc.setHeight("140px");
+        desc.getStyle().set("white-space", "pre-wrap");
+
+        // lista participantes
         MultiSelectListBox<String> lista = new MultiSelectListBox<>();
-        // Cargamos participantes desde el servicio (transaccional)
-        List<String> participantes;
-        try {
-            participantes = grupoService.obtenerNombresParticipantes(grupo.getId());
-        } catch (Exception ex) {
-            participantes = List.of();
-        }
-        lista.setItems(participantes);
-        lista.setHeight("220px");
+        lista.setItems(grupoService.obtenerNombresParticipantes(grupo.getId()));
+        lista.setHeight("280px");
         lista.getStyle().set("border", "1px solid #ccc");
 
+        VerticalLayout left = new VerticalLayout(titulo, desc);
+        left.setWidth("350px");
+
+        VerticalLayout right = new VerticalLayout(
+                new H3("Participantes"),
+                lista
+        );
+        right.setWidth("250px");
+
+        HorizontalLayout main = new HorizontalLayout(left, right);
+        main.setWidthFull();
+
         Button btnUnirse = new Button("Unirme", VaadinIcon.PLUS.create(), ev -> {
-            String login = session.getLoginEnSesion();
             try {
-                grupoService.unirUsuarioAGrupo(login, grupo.getId());
-                Notification.show("Te uniste al grupo " + grupo.getNombreGrupo());
-                // refrescar la lista en el diálogo
+                grupoService.unirUsuarioAGrupo(session.getLoginEnSesion(), grupo.getId());
+                Notification.show("Te uniste al grupo");
+
                 lista.setItems(grupoService.obtenerNombresParticipantes(grupo.getId()));
-                // refrescar tabla principal
                 cargar();
             } catch (Exception ex) {
                 Notification.show(ex.getMessage());
@@ -177,9 +188,10 @@ public class GruposView extends VerticalLayout {
         });
         btnUnirse.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        VerticalLayout contenido = new VerticalLayout(titulo, desc, lista, btnUnirse);
-        contenido.setPadding(true);
-        dialog.add(contenido);
+        VerticalLayout finalLayout = new VerticalLayout(main, btnUnirse);
+        finalLayout.setAlignItems(Alignment.CENTER);
+
+        dialog.add(finalLayout);
         dialog.open();
     }
 

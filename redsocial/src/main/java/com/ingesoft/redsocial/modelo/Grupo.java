@@ -17,7 +17,6 @@ public class Grupo {
     private String nombreGrupo;
     private String descripcion;
 
-    // 👇 RELACIÓN QUE FALTABA (coherente con Usuario.gruposCreados)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creador_login")
     private Usuario creador;
