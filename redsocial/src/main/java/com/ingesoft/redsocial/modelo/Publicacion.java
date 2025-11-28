@@ -16,24 +16,25 @@ public class Publicacion {
 
     private String contenido;
     private LocalDateTime fechaCreacion;
-
-    private String rutaArchivo; // Ruta de archivo adjunto
+    private String rutaArchivo;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Usuario autor;
 
-    @OneToMany(mappedBy = "publicacion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "publicacion", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Comentario> comentarios = new HashSet<>();
 
-    public Publicacion() {}
+    public Publicacion() { this.comentarios = new HashSet<>(); }
 
     public Publicacion(String contenido, Usuario autor) {
+        this();
         this.contenido = contenido;
         this.autor = autor;
         this.fechaCreacion = LocalDateTime.now();
     }
 
+    // Getters y setters
     public Long getId() { return id; }
     public String getContenido() { return contenido; }
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
@@ -48,9 +49,7 @@ public class Publicacion {
     public void setComentarios(Set<Comentario> comentarios) { this.comentarios = comentarios; }
 
     @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
+    public int hashCode() { return id != null ? id.hashCode() : 0; }
 
     @Override
     public boolean equals(Object obj) {

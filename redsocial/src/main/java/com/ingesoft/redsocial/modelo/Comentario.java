@@ -26,25 +26,30 @@ public class Comentario {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
-    private Comentario comentarioPadre; // Para respuestas
+    private Comentario comentarioPadre; 
 
-    @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "comentarioPadre", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Comentario> respuestas = new HashSet<>();
 
-    @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "comentario", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private Set<Reaccion> reacciones = new HashSet<>();
 
-    public Comentario() {}
+    public Comentario() {
+        this.respuestas = new HashSet<>();
+        this.reacciones = new HashSet<>();
+    }
 
     public Comentario(String texto, Usuario autor, Publicacion publicacion) {
+        this();
         this.texto = texto;
         this.autor = autor;
         this.publicacion = publicacion;
         this.fecha = LocalDateTime.now();
     }
 
+    // Getters y setters
     public Long getId() { return id; }
     public String getTexto() { return texto; }
     public LocalDateTime getFecha() { return fecha; }
@@ -63,9 +68,7 @@ public class Comentario {
     public void setReacciones(Set<Reaccion> reacciones) { this.reacciones = reacciones; }
 
     @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
-    }
+    public int hashCode() { return id != null ? id.hashCode() : 0; }
 
     @Override
     public boolean equals(Object obj) {
