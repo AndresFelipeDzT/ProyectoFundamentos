@@ -16,7 +16,6 @@ import com.vaadin.flow.component.html.Label;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.FileBuffer;
@@ -56,7 +55,6 @@ public class PublicacionesView extends VerticalLayout {
 
     private TextArea areaPublicacion;
     private Grid<Publicacion> tabla;
-
     private FileBuffer buffer = new FileBuffer();
     private Upload uploadComponent = new Upload(buffer);
 
@@ -71,58 +69,54 @@ public class PublicacionesView extends VerticalLayout {
 
         UI.getCurrent().access(this::validarSesion);
 
-        // -------------------- Estilo Azul --------------------
+        // ---------- Estilo ----------
         setSizeFull();
         getStyle().set("background-color", "#E6F7FF");
         setAlignItems(Alignment.CENTER);
 
         add(navegacion);
 
-        // Área de nueva publicación
+        // Nueva publicación
         areaPublicacion = new TextArea("Nueva publicación");
         areaPublicacion.setWidth("80%");
 
-        // Upload
         uploadComponent.setAcceptedFileTypes("image/jpeg", "image/png", "image/gif");
         uploadComponent.setMaxFileSize(1024 * 1024 * 5);
         uploadComponent.setUploadButton(new Button("Seleccionar Foto"));
         uploadComponent.setWidth("200px");
 
-        // Botón publicar
         Button publicarButton = new Button("Publicar", e -> publicar());
         publicarButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         publicarButton.getStyle().set("border-radius", "10px");
         publicarButton.setWidth("150px");
 
-        // Controles
         HorizontalLayout postControls = new HorizontalLayout(uploadComponent, publicarButton);
         postControls.setWidth("80%");
         postControls.setJustifyContentMode(com.vaadin.flow.component.orderedlayout.FlexComponent.JustifyContentMode.END);
         postControls.setAlignItems(Alignment.BASELINE);
 
-        // -------------------- Tabla de publicaciones --------------------
+        // Tabla
         tabla = new Grid<>(Publicacion.class, false);
         tabla.addColumn(Publicacion::getContenido).setHeader("Contenido").setAutoWidth(true);
         tabla.addColumn(p -> p.getAutor().getNombre()).setHeader("Autor").setAutoWidth(true);
         tabla.addColumn(p -> p.getFechaCreacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")))
              .setHeader("Fecha").setAutoWidth(true);
 
-        // Columna de acciones con botón "Ver / Comentar"
+        // Botón Ver / Comentar
         tabla.addComponentColumn(p -> {
-            Button ver = new Button("Ver / Comentar", e -> mostrarDetallePublicacion(p));
+            Button ver = new Button("Ver / Comentar", e -> abrirDialogPublicacion(p));
             ver.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
             return ver;
         }).setHeader("Acciones").setAutoWidth(true);
 
         tabla.setWidth("80%");
 
-        // Layout principal
         add(areaPublicacion, postControls, tabla);
 
         cargarFeed();
     }
 
-    // -------------------- Método publicar --------------------
+    // ---------------- Publicar ----------------
     private void publicar() {
         String contenido = areaPublicacion.getValue();
         String login = sessionService.getLoginEnSesion();
@@ -159,14 +153,14 @@ public class PublicacionesView extends VerticalLayout {
         }
     }
 
-    // -------------------- Cargar feed --------------------
+    // ---------------- Cargar feed ----------------
     private void cargarFeed() {
         List<Publicacion> publicaciones = publicacionService.obtenerFeed();
         tabla.setItems(publicaciones);
     }
 
-    // -------------------- Mostrar ventana flotante --------------------
-    private void mostrarDetallePublicacion(Publicacion publicacion) {
+    // ---------------- Abrir dialog de publicación ----------------
+    private void abrirDialogPublicacion(Publicacion publicacion) {
         // Cargar publicación completa con comentarios y reacciones
         Publicacion pubCompleta = publicacionService.obtenerPorIdConComentarios(publicacion.getId());
 
@@ -198,19 +192,19 @@ public class PublicacionesView extends VerticalLayout {
                             textoComentario,
                             null
                     );
-                } catch (UsuarioNotFoundException e1) {
-                    e1.printStackTrace();
+                } catch (UsuarioNotFoundException ex) {
+                    ex.printStackTrace();
                 }
                 areaComentario.clear();
                 dialog.removeAll();
-                mostrarDetallePublicacion(publicacion); // recarga comentarios
+                abrirDialogPublicacion(publicacion); // recarga comentarios
             }
         });
         HorizontalLayout comentarioControls = new HorizontalLayout(areaComentario, enviarComentario);
         comentarioControls.setWidthFull();
         contenido.add(comentarioControls);
 
-        // Mostrar comentarios
+        // Comentarios
         VerticalLayout comentariosModal = new VerticalLayout();
         comentariosModal.setWidthFull();
         for (Comentario c : pubCompleta.getComentarios()) {
@@ -222,7 +216,7 @@ public class PublicacionesView extends VerticalLayout {
         dialog.open();
     }
 
-    // -------------------- Layout de comentarios en modal --------------------
+    // ---------------- Layout de comentario ----------------
     private VerticalLayout crearLayoutComentarioModal(Comentario c) {
         VerticalLayout layout = new VerticalLayout();
         layout.setWidthFull();
@@ -240,7 +234,7 @@ public class PublicacionesView extends VerticalLayout {
             } catch (UsuarioNotFoundException ex) {
                 ex.printStackTrace();
             }
-            mostrarDetallePublicacion(c.getPublicacion());
+            abrirDialogPublicacion(c.getPublicacion());
         });
         Button dislike = new Button("👎 " + contarReacciones(c, Reaccion.TipoReaccion.DISLIKE), e -> {
             try {
@@ -248,7 +242,7 @@ public class PublicacionesView extends VerticalLayout {
             } catch (UsuarioNotFoundException ex) {
                 ex.printStackTrace();
             }
-            mostrarDetallePublicacion(c.getPublicacion());
+            abrirDialogPublicacion(c.getPublicacion());
         });
 
         acciones.add(like, dislike);
@@ -266,12 +260,12 @@ public class PublicacionesView extends VerticalLayout {
         return layout;
     }
 
-    // -------------------- Contar reacciones --------------------
+    // ---------------- Contar reacciones ----------------
     private int contarReacciones(Comentario c, Reaccion.TipoReaccion tipo) {
         return (int) c.getReacciones().stream().filter(r -> r.getTipo() == tipo).count();
     }
 
-    // -------------------- Validar sesión --------------------
+    // ---------------- Validar sesión ----------------
     private void validarSesion() {
         if (sessionService.getLoginEnSesion() == null) {
             UI.getCurrent().navigate("login");
