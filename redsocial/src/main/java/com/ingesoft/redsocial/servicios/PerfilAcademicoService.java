@@ -43,12 +43,12 @@ public class PerfilAcademicoService {
         Usuario u = usuarios.findById(login)
                 .orElseThrow(() -> new UsuarioNotFoundException("Usuario no existe"));
 
-        PerfilAcademico perfil = perfiles.findByUsuarioLogin(login);
-
+       PerfilAcademico perfil = perfiles.findByUsuarioLogin(login);
         if (perfil == null) {
             perfil = new PerfilAcademico();
-            perfil.setUsuario(u);
         }
+        perfil.setUsuario(u); 
+
 
         perfil.setCarrera(carrera);
         perfil.setSemestre(semestre);
