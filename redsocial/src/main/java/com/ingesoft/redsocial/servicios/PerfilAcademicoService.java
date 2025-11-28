@@ -47,8 +47,8 @@ public class PerfilAcademicoService {
         if (perfil == null) {
             perfil = new PerfilAcademico();
         }
-        perfil.setUsuario(u); 
-
+         perfil.setUsuario(u);
+        u.setPerfil(perfil); 
 
         perfil.setCarrera(carrera);
         perfil.setSemestre(semestre);
